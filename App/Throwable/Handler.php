@@ -39,7 +39,7 @@ class Handler
                 '`Url:` ' . $request->getUri()->__toString(),
                 '`File:` ' . $throwable->getFile(),
                 '`Line:` ' . $throwable->getLine(),
-                '`UserAgent:` ' . (is_array($temp) && count($temp) > 0) ? $temp[0] : 'NULL'
+                '`UserAgent:` ' . ((is_array($temp) && count($temp) > 0) ? $temp[0] : 'NULL')
             ])
         ]];
 
@@ -61,7 +61,7 @@ class Handler
                 $delay = intval(Config::getInstance()->getConf('DINGTALK.delay'));
                 if ((time() - $timestamp) > $delay) {
                     TableManager::getInstance()->get('share_table')->set('dingtalk.timestamp', ['timestamp' => time()]);
-                    Timer::delay(5000, function () use ($throwable, $request) {
+                    Timer::delay(3000, function () use ($throwable, $request) {
                         self::pushDtMsg($throwable, $request);
                     });
                 }
