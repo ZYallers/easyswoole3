@@ -16,7 +16,8 @@ use EasySwoole\Component\Di;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
-use EasySwoole\Http\Message\Status;
+use App\Utility\Status;
+use App\Utility\SysConst;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Utility\File;
@@ -116,9 +117,10 @@ class EasySwooleEvent implements Event
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
-        $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
-            echo $workerId . " Start.\n";
-        });
+        // 天天都在问的服务热重启 单独启动一个进程处理
+        /*if (Config::getInstance()->getConf('DEBUG')) {
+            ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
+        }*/
     }
 
     public static function onRequest(Request $request, Response $response): bool
@@ -139,10 +141,4 @@ class EasySwooleEvent implements Event
             Logger::getInstance()->log(join('|', $debugInfo), 'slow');
         }
     }
-
-    public static function onReceive(\swoole_server $server, int $fd, int $reactor_id, string $data): void
-    {
-        echo "[{$fd},{$reactor_id}] Receive.\n";
-    }
-
 }
