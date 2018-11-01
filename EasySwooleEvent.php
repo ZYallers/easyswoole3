@@ -9,7 +9,8 @@
 namespace EasySwoole\EasySwoole;
 
 
-use App\Exception\ExceptionHandler;
+use App\Throwable\ExceptionHandler;
+use App\Throwable\Handler;
 use App\Utility\Pool\MysqlPool;
 use App\Utility\Pool\RedisPool;
 use EasySwoole\Component\Di;
@@ -18,9 +19,11 @@ use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
 use App\Utility\Status;
 use App\Utility\SysConst;
+use EasySwoole\EasySwoole\Swoole\Memory\TableManager;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Utility\File;
+use Swoole\Table;
 
 class EasySwooleEvent implements Event
 {
@@ -51,7 +54,7 @@ class EasySwooleEvent implements Event
                 $version = $request->getRequestParam('version');
                 // 如果没传，默认获取当前最新版本
                 if (empty($version)) {
-                    $version = Config::getInstance()->getConf('APP_VERSION');
+                    $version = Config::getInstance()->getConf('APP.version');
                 }
                 $vsflag = false;
                 // 先获取router支持的版本，然后遍历
@@ -107,7 +110,7 @@ class EasySwooleEvent implements Event
         // 允许 URL 最大解析至5层
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
         // 异常捕获处理
-        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [ExceptionHandler::class, 'handle']);
+        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'handle']);
         // 注入 Mysql 连接池
         PoolManager::getInstance()->register(MysqlPool::class);
         // 注入 Redis 连接池
@@ -118,15 +121,23 @@ class EasySwooleEvent implements Event
     {
         // TODO: Implement mainServerCreate() method.
         // 天天都在问的服务热重启 单独启动一个进程处理
-        /*if (Config::getInstance()->getConf('DEBUG')) {
+        /*if (Config::getInstance()->getConf('APP.debug')) {
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
+        // 创建一个系统内存为多个进程之间共享
+        TableManager::getInstance()->add('share_table',
+            [
+                // 当前时间戳列
+                'timestamp' => ['type' => Table::TYPE_INT, 'size' => 12]
+            ]
+        );
     }
 
     public static function onRequest(Request $request, Response $response): bool
     {
         // TODO: Implement onRequest() method.
         $request->withAttribute('request_time', microtime(true));
+        $request->withAttribute('client_info', ServerManager::getInstance()->getSwooleServer()->getClientInfo($request->getSwooleRequest()->fd));
         // 接口版本校验
         self::versionCheck($request, $response);
         return true;

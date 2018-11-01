@@ -41,7 +41,7 @@ abstract class Base
     public function freeCache()
     {
         if (self::getInstance()->getCache() instanceof Redis) {
-            if (Config::getInstance()->getConf('DEBUG')) {
+            if (Config::getInstance()->getConf('APP.debug')) {
                 echo 'At ' . date('Y-m-d H:i:s') . ', Cache pool free.' . "\n";
             }
             PoolManager::getInstance()->getPool(RedisPool::class)->recycleObj(self::getInstance()->getCache());
@@ -52,7 +52,7 @@ abstract class Base
     {
         // TODO: Implement __destruct() method.
         if ($this->cache instanceof Redis) {
-            if (Config::getInstance()->getConf('DEBUG')) {
+            if (Config::getInstance()->getConf('APP.debug')) {
                 echo 'At ' . date('Y-m-d H:i:s') . ', Cache pool recycle.' . "\n";
             }
             PoolManager::getInstance()->getPool(RedisPool::class)->recycleObj($this->cache);

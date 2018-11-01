@@ -35,15 +35,15 @@ abstract class Base extends Controller
             }
             $data = ['code' => $statusCode, 'data' => $data, 'msg' => is_null($msg) ? '' : $msg];
             // debug 模式下多返回一些信息
-            if (Config::getInstance()->getConf('DEBUG')) {
+            if (Config::getInstance()->getConf('APP.debug')) {
                 // 从请求里获取之前增加的时间戳
                 $reqTime = $this->request()->getAttribute('request_time');
                 // 计算一下运行时间
                 $runTime = round(microtime(true) - $reqTime, 6);
                 // 获取用户IP地址
-                $ip = ServerManager::getInstance()->getSwooleServer()->getClientInfo($this->request()->getSwooleRequest()->fd);
+                $clientInfo = $this->request()->getAttribute('client_info');
                 // 拼接日志内容
-                $debugInfo = ['ip' => $ip['remote_ip'], 'now' => date('Y-m-d H:i:s'), 'runtime' => $runTime,
+                $debugInfo = ['ip' => $clientInfo['remote_ip'], 'now' => date('Y-m-d H:i:s'), 'runtime' => $runTime,
                     'uri' => $this->request()->getUri()->__toString()];
                 $userAgent = $this->request()->getHeader('user-agent');
                 if (is_array($userAgent) && count($userAgent) > 0) {
