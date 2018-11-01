@@ -101,6 +101,8 @@ class EasySwooleEvent implements Event
         date_default_timezone_set('Asia/Shanghai');
         // 载入项目 Conf 文件夹中的所有的配置文件
         self::loadPath(EASYSWOOLE_ROOT . '/Conf');
+        // 设置POST/文件上传最大尺寸限制
+        //Config::getInstance()->setConf('MAIN_SERVER.SETTING.package_max_length', 2 * 1024 * 1024);
         // 允许 URL 最大解析至5层
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
         // 异常捕获处理
