@@ -43,7 +43,8 @@ abstract class Base extends Controller
                 // 获取用户IP地址
                 $ip = ServerManager::getInstance()->getSwooleServer()->getClientInfo($this->request()->getSwooleRequest()->fd);
                 // 拼接日志内容
-                $debugInfo = ['ip' => $ip['remote_ip'], 'runtime' => $runTime, 'uri' => $this->request()->getUri()->__toString()];
+                $debugInfo = ['ip' => $ip['remote_ip'], 'now' => date('Y-m-d H:i:s'), 'runtime' => $runTime,
+                    'uri' => $this->request()->getUri()->__toString()];
                 $userAgent = $this->request()->getHeader('user-agent');
                 if (is_array($userAgent) && count($userAgent) > 0) {
                     $debugInfo['user_agent'] = $userAgent[0];
