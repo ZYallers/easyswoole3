@@ -19,11 +19,11 @@ use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
 use App\Utility\Status;
 use App\Utility\SysConst;
-use EasySwoole\EasySwoole\Swoole\Memory\TableManager;
+use EasySwoole\EasySwoole\Swoole\Memory\AtomicManager;
+use EasySwoole\EasySwoole\Swoole\Time\Timer;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Utility\File;
-use Swoole\Table;
 
 class EasySwooleEvent implements Event
 {
@@ -54,7 +54,7 @@ class EasySwooleEvent implements Event
                 $version = $request->getRequestParam('version');
                 // 如果没传，默认获取当前最新版本
                 if (empty($version)) {
-                    $version = Config::getInstance()->getConf('APP.version');
+                    $version = Config::getInstance()->getConf('app.version');
                 }
                 $vsflag = false;
                 // 先获取router支持的版本，然后遍历
@@ -121,35 +121,57 @@ class EasySwooleEvent implements Event
     {
         // TODO: Implement mainServerCreate() method.
         // 天天都在问的服务热重启 单独启动一个进程处理
-        /*if (Config::getInstance()->getConf('APP.debug')) {
+        /*if (Config::getInstance()->getConf('app.debug')) {
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
-        // 创建一个系统内存为多个进程之间共享
-        TableManager::getInstance()->add('share_table',
-            [
-                // 当前时间戳列
-                'timestamp' => ['type' => Table::TYPE_INT, 'size' => 12]
-            ]
-        );
+
+        // 钉钉消息推送
+        if (Config::getInstance()->getConf('dingtalk.enable')) {
+            // 延迟推送计算器
+            AtomicManager::getInstance()->add('dingtalk.timestamp');
+        }
     }
 
     public static function onRequest(Request $request, Response $response): bool
     {
         // TODO: Implement onRequest() method.
+        // ============ 接口版本校验 ============
+        self::versionCheck($request, $response);
+
         $request->withAttribute('request_time', microtime(true));
         $request->withAttribute('client_info', ServerManager::getInstance()->getSwooleServer()->getClientInfo($request->getSwooleRequest()->fd));
-        // 接口版本校验
-        self::versionCheck($request, $response);
+
         return true;
+    }
+
+    private static function saveSlowLog(Request $request): void
+    {
+        $nowTime = microtime(true);
+        $reqTime = $request->getAttribute('request_time', 0);
+        if ($reqTime > 0 && ($nowTime - $reqTime) > 3) {
+            Timer::delay(1, function () use ($request, $nowTime) {
+                // 从请求里获取之前增加的时间戳
+                $reqTime = $request->getAttribute('request_time', 0);
+                // 计算一下运行时间
+                $runTime = round($nowTime - $reqTime, 6) . 's';
+                // 获取用户IP地址
+                $clientInfo = $request->getAttribute('client_info');
+                // 拼接日志内容
+                $data = ['ip' => $clientInfo['remote_ip'], 'time' => date('Y-m-d H:i:s', intval($reqTime)),
+                    'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
+                $userAgent = $request->getHeader('user-agent');
+                if (is_array($userAgent) && count($userAgent) > 0) {
+                    $data['user_agent'] = $userAgent[0];
+                }
+                Logger::getInstance()->log(join(' | ', $data), 'slow');
+            });
+        }
     }
 
     public static function afterRequest(Request $request, Response $response): void
     {
         // TODO: Implement afterAction() method.
-        // 超过 3 秒记录到 slow 日志文件
-        $debugInfo = $request->getAttribute('debug_info');
-        if (is_array($debugInfo) && isset($debugInfo['runtime']) && $debugInfo['runtime'] >= 3) {
-            Logger::getInstance()->log(join('|', $debugInfo), 'slow');
-        }
+        // ========= 超过3秒记录到slow日志文件 =========
+        self::saveSlowLog($request);
     }
 }

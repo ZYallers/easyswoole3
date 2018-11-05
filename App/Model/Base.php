@@ -42,7 +42,7 @@ abstract class Base
     public function freeDb()
     {
         if (self::getInstance()->getDb() instanceof MysqlPoolObject) {
-            if (Config::getInstance()->getConf('APP.debug')) {
+            if (Config::getInstance()->getConf('app.debug')) {
                 echo 'At ' . date('Y-m-d H:i:s') . ', LastQuery: [' . self::getInstance()->getDb()->getLastQuery() . '], Mysql pool free.' . "\n";
             }
             PoolManager::getInstance()->getPool(MysqlPool::class)->recycleObj(self::getInstance()->getDb());
@@ -53,7 +53,7 @@ abstract class Base
     {
         // TODO: Implement __destruct() method.
         if ($this->db instanceof MysqlPoolObject) {
-            if (Config::getInstance()->getConf('APP.debug')) {
+            if (Config::getInstance()->getConf('app.debug')) {
                 echo 'At ' . date('Y-m-d H:i:s') . ', LastQuery: [' . $this->db->getLastQuery() . '], Mysql pool recycle.' . "\n";
             }
             PoolManager::getInstance()->getPool(MysqlPool::class)->recycleObj($this->db);
