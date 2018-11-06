@@ -8,7 +8,6 @@
 
 namespace App\Utility\Pool;
 
-
 use EasySwoole\Component\Pool\PoolObjectInterface;
 
 class MysqlPoolObject extends \MysqliDb implements PoolObjectInterface
@@ -25,5 +24,11 @@ class MysqlPoolObject extends \MysqliDb implements PoolObjectInterface
         // TODO: Implement objectRestore() method.
         $this->rollback();
         $this->reset();
+    }
+
+    public function beforeUse(): bool
+    {
+        // TODO: Implement beforeUse() method.
+        return true;
     }
 }
