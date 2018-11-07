@@ -8,4 +8,7 @@ return [
     'test/index/notedetail' => ['version' => '4.0.0+', 'method' => 'get'],
     'test/index/curl' => ['version' => '4.0.0+', 'method' => 'get'],
     'test/index/asyncdemo' => ['version' => '4.1.0+', 'method' => 'get,post'],
+    'test/index/gotest' => ['version' => '4.1.0+', 'method' => 'get'],
+    'test/index/gotest2' => ['version' => '4.1.0+', 'method' => 'get'],
+    'test/index/ptest' => ['version' => '4.1.0+', 'method' => 'get'],
 ];

@@ -1,1 +1,6 @@
 vendor
+.idea
+Log
+Temp
+composer.lock
+easyswoole.install
