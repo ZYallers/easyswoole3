@@ -4,20 +4,69 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b99ea7ff26dc058fb05d9dabbdf7c5ea",
+    "content-hash": "771bed855b07e3e1215ba8c65b091019",
     "packages": [
         {
-            "name": "easyswoole/component",
-            "version": "1.1.7",
+            "name": "dragonmantank/cron-expression",
+            "version": "v2.2.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/easy-swoole/component.git",
-                "reference": "a357fbd04ce3a8bf1751826bef61d432db573270"
+                "url": "https://github.com/dragonmantank/cron-expression.git",
+                "reference": "92a2c3768d50e21a1f26a53cb795ce72806266c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/component/zipball/a357fbd04ce3a8bf1751826bef61d432db573270",
-                "reference": "a357fbd04ce3a8bf1751826bef61d432db573270",
+                "url": "https://api.github.com/repos/dragonmantank/cron-expression/zipball/92a2c3768d50e21a1f26a53cb795ce72806266c5",
+                "reference": "92a2c3768d50e21a1f26a53cb795ce72806266c5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~6.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Cron\\": "src/Cron/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https://github.com/mtdowling"
+                },
+                {
+                    "name": "Chris Tankersley",
+                    "email": "chris@ctankersley.com",
+                    "homepage": "https://github.com/dragonmantank"
+                }
+            ],
+            "description": "CRON for PHP: Calculate the next or previous run date and determine if a CRON expression is due",
+            "keywords": [
+                "cron",
+                "schedule"
+            ],
+            "time": "2018-06-06T03:12:17+00:00"
+        },
+        {
+            "name": "easyswoole/component",
+            "version": "1.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/easy-swoole/component.git",
+                "reference": "a54f893469ca39f96ef81b3e1b0acc8f5e9fd20d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/easy-swoole/component/zipball/a54f893469ca39f96ef81b3e1b0acc8f5e9fd20d",
+                "reference": "a54f893469ca39f96ef81b3e1b0acc8f5e9fd20d",
                 "shasum": ""
             },
             "require": {
@@ -48,7 +97,7 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2018-10-30T08:59:07+00:00"
+            "time": "2018-11-06T15:09:36+00:00"
         },
         {
             "name": "easyswoole/curl",
@@ -102,15 +151,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/easy-swoole/easyswoole.git",
-                "reference": "8aca08b002655faedb63330f35ae0930e89c7f89"
+                "reference": "85b5c4c38f7ecac76900799ec376612d250ca927"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/easyswoole/zipball/8aca08b002655faedb63330f35ae0930e89c7f89",
-                "reference": "8aca08b002655faedb63330f35ae0930e89c7f89",
+                "url": "https://api.github.com/repos/easy-swoole/easyswoole/zipball/85b5c4c38f7ecac76900799ec376612d250ca927",
+                "reference": "85b5c4c38f7ecac76900799ec376612d250ca927",
                 "shasum": ""
             },
             "require": {
+                "dragonmantank/cron-expression": "^2.2",
                 "easyswoole/component": "^1.0",
                 "easyswoole/http": "^1.0",
                 "easyswoole/socket": "^1.0",
@@ -151,20 +201,20 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2018-10-30T14:22:31+00:00"
+            "time": "2018-11-07T07:48:42+00:00"
         },
         {
             "name": "easyswoole/http",
-            "version": "1.1.7",
+            "version": "1.1.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/easy-swoole/http.git",
-                "reference": "10b75099110ca8e0770b3294e3e33bd202b5d8ea"
+                "reference": "f15453b0c7eede0fe62587f1aad23f6c3539f14b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/http/zipball/10b75099110ca8e0770b3294e3e33bd202b5d8ea",
-                "reference": "10b75099110ca8e0770b3294e3e33bd202b5d8ea",
+                "url": "https://api.github.com/repos/easy-swoole/http/zipball/f15453b0c7eede0fe62587f1aad23f6c3539f14b",
+                "reference": "f15453b0c7eede0fe62587f1aad23f6c3539f14b",
                 "shasum": ""
             },
             "require": {
@@ -203,20 +253,66 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2018-10-26T11:33:54+00:00"
+            "time": "2018-11-07T02:46:02+00:00"
         },
         {
-            "name": "easyswoole/socket",
-            "version": "1.0.9",
+            "name": "easyswoole/mysqli",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/easy-swoole/socket.git",
-                "reference": "957c56f98e25e50cbf4b6e43650d9915cd047f24"
+                "url": "https://github.com/easy-swoole/mysqli.git",
+                "reference": "1fdd70cd745ed19c08257eacdfa190b8055d2942"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/socket/zipball/957c56f98e25e50cbf4b6e43650d9915cd047f24",
-                "reference": "957c56f98e25e50cbf4b6e43650d9915cd047f24",
+                "url": "https://api.github.com/repos/easy-swoole/mysqli/zipball/1fdd70cd745ed19c08257eacdfa190b8055d2942",
+                "reference": "1fdd70cd745ed19c08257eacdfa190b8055d2942",
+                "shasum": ""
+            },
+            "require": {
+                "easyswoole/spl": "^1.0"
+            },
+            "require-dev": {
+                "easyswoole/swoole-ide-helper": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "EasySwoole\\Mysqli\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "YF",
+                    "email": "291323003@qq.com"
+                }
+            ],
+            "description": "An efficient swoole framework",
+            "homepage": "https://www.easyswoole.com/",
+            "keywords": [
+                "async",
+                "easyswoole",
+                "framework",
+                "swoole"
+            ],
+            "time": "2018-10-31T09:37:02+00:00"
+        },
+        {
+            "name": "easyswoole/socket",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/easy-swoole/socket.git",
+                "reference": "419749b5da3170c2331824e2c7d608eebcafd0d1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/easy-swoole/socket/zipball/419749b5da3170c2331824e2c7d608eebcafd0d1",
+                "reference": "419749b5da3170c2331824e2c7d608eebcafd0d1",
                 "shasum": ""
             },
             "require": {
@@ -252,7 +348,7 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2018-10-24T05:12:47+00:00"
+            "time": "2018-11-07T12:45:50+00:00"
         },
         {
             "name": "easyswoole/spl",
@@ -329,16 +425,16 @@
         },
         {
             "name": "easyswoole/trace",
-            "version": "1.1.3",
+            "version": "1.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/easy-swoole/trace.git",
-                "reference": "60e9c98808b64fc76c371203c5d59e531ee5c4c1"
+                "reference": "bcd63ab2519909e344b4cb290f27067093e834a9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/trace/zipball/60e9c98808b64fc76c371203c5d59e531ee5c4c1",
-                "reference": "60e9c98808b64fc76c371203c5d59e531ee5c4c1",
+                "url": "https://api.github.com/repos/easy-swoole/trace/zipball/bcd63ab2519909e344b4cb290f27067093e834a9",
+                "reference": "bcd63ab2519909e344b4cb290f27067093e834a9",
                 "shasum": ""
             },
             "require": {
@@ -368,7 +464,7 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2018-10-27T13:46:21+00:00"
+            "time": "2018-11-07T06:59:27+00:00"
         },
         {
             "name": "easyswoole/utility",
@@ -509,51 +605,6 @@
             "time": "2018-03-21T22:21:57+00:00"
         },
         {
-            "name": "joshcam/mysqli-database-class",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ThingEngineer/PHP-MySQLi-Database-Class.git",
-                "reference": "43459aeaee2b98ef651da78f8a03ce22c23ebbeb"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ThingEngineer/PHP-MySQLi-Database-Class/zipball/43459aeaee2b98ef651da78f8a03ce22c23ebbeb",
-                "reference": "43459aeaee2b98ef651da78f8a03ce22c23ebbeb",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "MysqliDb.php",
-                    "dbObject.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-3.0-or-later"
-            ],
-            "authors": [
-                {
-                    "name": "Alexander V. Butenko",
-                    "email": "a.butenka@gmail.com",
-                    "homepage": "http://smarttechdo.com",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Josh Campbell",
-                    "email": "josh.lee.campbell@gmail.com",
-                    "homepage": "https://github.com/thingengineer",
-                    "role": "Developer"
-                }
-            ],
-            "description": "PHP MySQL Wrapper and object mapper which utilizes MySQLi and prepared statements",
-            "time": "2018-10-11T10:30:56+00:00"
-        },
-        {
             "name": "nikic/fast-route",
             "version": "v1.3.0",
             "source": {
@@ -652,16 +703,16 @@
         },
         {
             "name": "symfony/polyfill-php56",
-            "version": "v1.9.0",
+            "version": "v1.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php56.git",
-                "reference": "7b4fc009172cc0196535b0328bd1226284a28000"
+                "reference": "ff208829fe1aa48ab9af356992bb7199fed551af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php56/zipball/7b4fc009172cc0196535b0328bd1226284a28000",
-                "reference": "7b4fc009172cc0196535b0328bd1226284a28000",
+                "url": "https://api.github.com/repos/symfony/polyfill-php56/zipball/ff208829fe1aa48ab9af356992bb7199fed551af",
+                "reference": "ff208829fe1aa48ab9af356992bb7199fed551af",
                 "shasum": ""
             },
             "require": {
@@ -704,20 +755,20 @@
                 "portable",
                 "shim"
             ],
-            "time": "2018-08-06T14:22:27+00:00"
+            "time": "2018-09-21T06:26:08+00:00"
         },
         {
             "name": "symfony/polyfill-util",
-            "version": "v1.9.0",
+            "version": "v1.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-util.git",
-                "reference": "8e15d04ba3440984d23e7964b2ee1d25c8de1581"
+                "reference": "3b58903eae668d348a7126f999b0da0f2f93611c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-util/zipball/8e15d04ba3440984d23e7964b2ee1d25c8de1581",
-                "reference": "8e15d04ba3440984d23e7964b2ee1d25c8de1581",
+                "url": "https://api.github.com/repos/symfony/polyfill-util/zipball/3b58903eae668d348a7126f999b0da0f2f93611c",
+                "reference": "3b58903eae668d348a7126f999b0da0f2f93611c",
                 "shasum": ""
             },
             "require": {
@@ -756,15 +807,14 @@
                 "polyfill",
                 "shim"
             ],
-            "time": "2018-08-06T14:22:27+00:00"
+            "time": "2018-09-30T16:36:12+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "easyswoole/easyswoole": 20,
-        "joshcam/mysqli-database-class": 20
+        "easyswoole/easyswoole": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

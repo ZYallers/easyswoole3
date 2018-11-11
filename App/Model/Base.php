@@ -8,55 +8,44 @@
 
 namespace App\Model;
 
-use App\Utility\Pool\MysqlPool;
-use App\Utility\Pool\MysqlPoolObject;
+use App\Utility\Pool\MysqlObject;
 use EasySwoole\Component\Pool\PoolManager;
-use EasySwoole\Component\Singleton;
 use EasySwoole\EasySwoole\Config;
 
 abstract class Base
 {
-    use Singleton;
-
     private $db;
+    private $className;
 
-    public function __construct()
+    protected function __construct(string $className)
     {
-        $db = PoolManager::getInstance()->getPool(MysqlPool::class)->getObj();
-        if ($db instanceof MysqlPoolObject) {
+        $this->className = $className;
+        $timeout = Config::getInstance()->getConf('mysql.' . strtolower(basename(str_replace('\\', '/', $this->className))) . '.POOL_TIME_OUT');
+        $db = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
+        if ($db instanceof MysqlObject) {
             $this->db = $db;
         } else {
-            throw new \Exception('Db pool is empty');
+            throw new \Exception('Mysql pool is empty');
         }
     }
 
     /**
      * getDb
-     * @return MysqlPoolObject|mixed|null
+     * @return MysqlObject
      */
     protected function getDb()
     {
         return $this->db;
     }
 
-    public function freeDb()
-    {
-        if (self::getInstance()->getDb() instanceof MysqlPoolObject) {
-            if (Config::getInstance()->getConf('app.debug')) {
-                echo 'At ' . date('Y-m-d H:i:s') . ', LastQuery: [' . self::getInstance()->getDb()->getLastQuery() . '], Mysql pool free.' . "\n";
-            }
-            PoolManager::getInstance()->getPool(MysqlPool::class)->recycleObj(self::getInstance()->getDb());
-        }
-    }
-
     public function __destruct()
     {
         // TODO: Implement __destruct() method.
-        if ($this->db instanceof MysqlPoolObject) {
+        if ($this->db instanceof MysqlObject) {
             if (Config::getInstance()->getConf('app.debug')) {
                 echo 'At ' . date('Y-m-d H:i:s') . ', LastQuery: [' . $this->db->getLastQuery() . '], Mysql pool recycle.' . "\n";
             }
-            PoolManager::getInstance()->getPool(MysqlPool::class)->recycleObj($this->db);
+            PoolManager::getInstance()->getPool($this->className)->recycleObj($this->db);
         }
     }
 }

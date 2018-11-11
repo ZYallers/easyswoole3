@@ -7,6 +7,6 @@
   "require": {
     "easyswoole/easyswoole": "3.x-dev",
     "easyswoole/swoole-ide-helper": "^1.03",
-    "joshcam/mysqli-database-class": "dev-master"
+    "easyswoole/mysqli": "^1.0"
   }
 }

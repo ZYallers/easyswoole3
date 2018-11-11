@@ -9,10 +9,16 @@
 namespace App\Model\User;
 
 use App\Model\Base;
+use App\Utility\Pool\Mysql\Enjoythin;
 
 class UseInfo extends Base
 {
     private $tableName = 'et_user_info';
+
+    public function __construct(string $className = null)
+    {
+        parent::__construct(Enjoythin::class);
+    }
 
     public function getOneByWhere(array $where)
     {

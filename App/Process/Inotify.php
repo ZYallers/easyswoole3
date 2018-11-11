@@ -47,7 +47,7 @@ class Inotify extends AbstractProcess
                 $events = inotify_read($inotify);
                 if (!empty($events)) {
                     // TODO::注意更新多个文件的间隔时间处理,防止一次更新了10个文件，重启了10次，懒得做了，反正原理在这里
-                    Logger::getInstance()->console('At ' . date('Y-m-d H:i:s') . '[' . join(',', $events) . '] Service is going to reload');
+                    Logger::getInstance()->log('[' . join(',', $events) . '] Service is going to reload', 'inotify_reload');
                     ServerManager::getInstance()->getSwooleServer()->reload();
                 }
             });

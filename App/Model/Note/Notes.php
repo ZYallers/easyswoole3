@@ -14,6 +14,11 @@ class Notes extends Base
 {
     private $tableName = 'et_notes';
 
+    public function __construct(string $className = null)
+    {
+        parent::__construct(Enjoythin::class);
+    }
+
     public function getOneByWhere(array $where)
     {
         foreach ($where as $item) {

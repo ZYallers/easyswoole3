@@ -8,18 +8,14 @@
 
 namespace EasySwoole\EasySwoole;
 
-
-use App\Throwable\ExceptionHandler;
 use App\Throwable\Handler;
-use App\Utility\Pool\MysqlPool;
-use App\Utility\Pool\RedisPool;
+use App\Utility\Pool\Mysql\Enjoythin;
+use App\Utility\Pool\Redis\Cache;
+use App\Utility\Status;
 use EasySwoole\Component\Di;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
-use App\Utility\Status;
-use App\Utility\SysConst;
-use EasySwoole\EasySwoole\Swoole\Memory\AtomicManager;
 use EasySwoole\EasySwoole\Swoole\Time\Timer;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
@@ -27,18 +23,29 @@ use EasySwoole\Utility\File;
 
 class EasySwooleEvent implements Event
 {
-    public static function loadPath(): void
+
+    public static function initialize()
+    {
+        // TODO: Implement initialize() method.
+        date_default_timezone_set('Asia/Shanghai');
+        self::loadAppConf(); //载入Conf文件夹中的所有的配置文件
+        Di::getInstance()->set(SysConst::ERROR_HANDLER, [Handler::class, 'errorHandler']); //配置错误处理回调
+        Di::getInstance()->set(SysConst::SHUTDOWN_FUNCTION, [Handler::class, 'shutDownHandler']); //配置脚本结束回调
+        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'httpExceptionhandler']); //配置http控制器异常回调
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_NAMESPACE, 'App\\Controller\\Http\\'); //配置控制器命名空间
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5); //配置http控制器最大解析层级，默认为5层
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15); //http控制器对象池最大数量，默认为15个
+        // 注入连接池
+        PoolManager::getInstance()->register(Enjoythin::class, Config::getInstance()->getConf('mysql.enjoythin.POOL_MAX_NUM'));
+        PoolManager::getInstance()->register(Cache::class, Config::getInstance()->getConf('redis.cache.POOL_MAX_NUM'));
+    }
+
+    private static function loadAppConf(): void
     {
         $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Conf');
         if (is_array($files)) {
             foreach ($files['files'] as $file) {
-                $fileNameArr = explode('.', $file);
-                $fileSuffix = end($fileNameArr);
-                if ($fileSuffix == 'php') {
-                    Config::getInstance()->loadFile($file);
-                } elseif ($fileSuffix == 'env') {
-                    Config::getInstance()->loadEnv($file);
-                }
+                Config::getInstance()->loadFile($file);
             }
         }
     }
@@ -99,24 +106,6 @@ class EasySwooleEvent implements Event
         }
     }
 
-    public static function initialize()
-    {
-        // TODO: Implement initialize() method.
-        date_default_timezone_set('Asia/Shanghai');
-        // 载入项目 Conf 文件夹中的所有的配置文件
-        self::loadPath(EASYSWOOLE_ROOT . '/Conf');
-        // 设置POST/文件上传最大尺寸限制
-        //Config::getInstance()->setConf('MAIN_SERVER.SETTING.package_max_length', 2 * 1024 * 1024);
-        // 允许 URL 最大解析至5层
-        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
-        // 异常捕获处理
-        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'handle']);
-        // 注入 Mysql 连接池
-        PoolManager::getInstance()->register(MysqlPool::class);
-        // 注入 Redis 连接池
-        PoolManager::getInstance()->register(RedisPool::class);
-    }
-
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
@@ -125,22 +114,18 @@ class EasySwooleEvent implements Event
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
 
-        // 钉钉消息推送
-        if (Config::getInstance()->getConf('dingtalk.enable')) {
-            // 延迟推送计算器
-            AtomicManager::getInstance()->add('dingtalk.timestamp');
-        }
+        $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
+            echo '--------------- worker ' . $workerId . ' start ---------------' . PHP_EOL;
+        });
     }
 
     public static function onRequest(Request $request, Response $response): bool
     {
         // TODO: Implement onRequest() method.
+        $request->withAttribute('request_time', microtime(true));
+
         // ============ 接口版本校验 ============
         self::versionCheck($request, $response);
-
-        $request->withAttribute('request_time', microtime(true));
-        $request->withAttribute('client_info', ServerManager::getInstance()->getSwooleServer()->getClientInfo($request->getSwooleRequest()->fd));
-
         return true;
     }
 
@@ -149,21 +134,19 @@ class EasySwooleEvent implements Event
         $nowTime = microtime(true);
         $reqTime = $request->getAttribute('request_time', 0);
         if ($reqTime > 0 && ($nowTime - $reqTime) > 3) {
-            Timer::delay(1, function () use ($request, $nowTime) {
-                // 从请求里获取之前增加的时间戳
-                $reqTime = $request->getAttribute('request_time', 0);
+            Timer::delay(5000, function () use ($request, $reqTime, $nowTime) {
                 // 计算一下运行时间
                 $runTime = round($nowTime - $reqTime, 6) . 's';
                 // 获取用户IP地址
-                $clientInfo = $request->getAttribute('client_info');
+                $ip = ServerManager::getInstance()->getSwooleServer()->connection_info($request->getSwooleRequest()->fd);
+                $ip = isset($ip['remote_ip']) ? $ip['remote_ip'] : 'unknow';
                 // 拼接日志内容
-                $data = ['ip' => $clientInfo['remote_ip'], 'time' => date('Y-m-d H:i:s', intval($reqTime)),
-                    'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
+                $data = ['ip' => $ip, 'time' => date('Y-m-d H:i:s', $reqTime), 'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
                 $userAgent = $request->getHeader('user-agent');
                 if (is_array($userAgent) && count($userAgent) > 0) {
                     $data['user_agent'] = $userAgent[0];
                 }
-                Logger::getInstance()->log(join(' | ', $data), 'slow');
+                Logger::getInstance()->log(var_export($data, true), 'slow');
             });
         }
     }
@@ -173,5 +156,10 @@ class EasySwooleEvent implements Event
         // TODO: Implement afterAction() method.
         // ========= 超过3秒记录到slow日志文件 =========
         self::saveSlowLog($request);
+    }
+
+    public static function onReceive(\swoole_server $server, int $fd, int $reactor_id, string $data): void
+    {
+        // TODO: Implement afterAction() method.
     }
 }

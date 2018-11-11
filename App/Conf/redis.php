@@ -7,10 +7,11 @@
  */
 
 return [
-    'host' => '121.41.83.91',
-    'port' => 6379,
-    'select' => 0,
-    'timeout' => 0,
-    'password' => 'n5R8VzYs615',
-    'persistent' => false,
+    'cache' => [
+        'host' => '127.0.0.1',
+        'port' => 6379,
+        'auth' => '',
+        'POOL_MAX_NUM' => 4,
+        'POOL_TIME_OUT' => 0.1,
+    ]
 ];

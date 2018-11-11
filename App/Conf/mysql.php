@@ -7,10 +7,15 @@
  */
 
 return [
-    'host' => '121.41.83.91', // 数据库地址
-    'port' => 3306, // 数据库端口
-    'username' => 'enjoythin', // 数据库用户名
-    'password' => 'gR7UNbNr9TSk', // 数据库密码
-    'db' => 'enjoythin', // 数据库库名
-    'charset' => 'utf8', // 字符串类型
+    'enjoythin' => [
+        'host' => '127.0.0.1',
+        'port' => 3306,
+        'user' => 'root',
+        'timeout' => 5,
+        'charset' => 'utf8',
+        'password' => 'root',
+        'database' => 'test',
+        'POOL_MAX_NUM' => 4,
+        'POOL_TIME_OUT' => 0.1,
+    ]
 ];
