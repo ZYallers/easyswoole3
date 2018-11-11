@@ -6,26 +6,28 @@
  * Time: 下午7:25
  */
 
-namespace App\HttpController\V410\Test;
+namespace App\Controller\Http\V410\Test;
 
-use App\HttpController\Base;
-use App\Utility\Curl;
+use App\Controller\Http\Base;
 use App\Utility\Status;
+use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
-use EasySwoole\EasySwoole\Swoole\Memory\ChannelManager;
-use EasySwoole\EasySwoole\Swoole\Memory\TableManager;
 use EasySwoole\EasySwoole\Swoole\Task\TaskManager;
-use EasySwoole\Spl\SplArray;
 use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
-use Swoole\Coroutine\Http\Client;
-use Swoole\Table;
+use Swoole\Process;
 
 class Index extends Base
 {
     public function banben()
     {
-        $this->writeJson(Status::CODE_OK, ['uri' => $this->request()->getUri()->getPath()]);
+        $this->writeJson(Status::CODE_OK, ['uri' => $this->request()->getUri()->__toString()]);
+    }
+
+    public function routers()
+    {
+        $routers = Config::getInstance()->getConf('router');
+        $this->writeJson(Status::CODE_OK, ['routers' => $routers]);
     }
 
     public function asyncdemo()
@@ -39,7 +41,7 @@ class Index extends Base
 
     public function gotest()
     {
-        $chan = new Channel();
+        $chan = new Channel(2);
         \go(function () use ($chan) {
             Coroutine::sleep(4);
             $chan->push(['www.qq.com' => '1']);
@@ -66,32 +68,6 @@ class Index extends Base
 
         $chan->close();
         $this->writeJson(200, $data);
-    }
-
-    public function gotest2()
-    {
-        $chan = new Channel(1);
-        \go(function () use ($chan) {
-            $resp = Curl::getInstance()->request('get', 'http://127.0.0.1:9501/test/index/sleep?version=4.0.0&time=2');
-            $chan->push(['1' => $resp->getBody()]);
-            $chan->close();
-        });
-        $chan2 = new Channel(1);
-        \go(function () use ($chan2) {
-            $resp = Curl::getInstance()->request('get', 'http://127.0.0.1:9501/test/index/sleep?version=4.0.0&time=2');
-            $chan2->push(['2' => $resp->getBody()]);
-            $chan2->close();
-        });
-
-        $chan3 = new Channel(1);
-        \go(function () use ($chan, $chan2, $chan3) {
-            $data = [];
-            $data[] = $chan->pop();
-            $data[] = $chan2->pop();
-            $chan3->push(['data' => $data]);
-        });
-
-        $this->writeJson(200, ['data' => $chan3->pop()]);
     }
 
     private static function ptss()

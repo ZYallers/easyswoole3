@@ -6,9 +6,10 @@
  * Time: 下午12:49
  */
 
-namespace App\HttpController;
+namespace App\Controller\Http;
 
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Http\AbstractInterface\Controller;
 use EasySwoole\Http\Message\Status;
 
@@ -33,10 +34,10 @@ abstract class Base extends Controller
         // 计算一下运行时间
         $runTime = round(microtime(true) - $reqTime, 6) . 's';
         // 获取用户IP地址
-        $clientInfo = $this->request()->getAttribute('client_info');
+        $ip = ServerManager::getInstance()->getSwooleServer()->connection_info($this->request()->getSwooleRequest()->fd);
+        $ip = isset($ip['remote_ip']) ? $ip['remote_ip'] : 'unknow';
         // 拼接日志内容
-        $debugInfo = ['ip' => $clientInfo['remote_ip'], 'now' => date('Y-m-d H:i:s'),
-            'runtime' => $runTime, 'uri' => $this->request()->getUri()->__toString()];
+        $debugInfo = ['ip' => $ip, 'now' => date('Y-m-d H:i:s'), 'runtime' => $runTime, 'uri' => $this->request()->getUri()->__toString()];
         $userAgent = $this->request()->getHeader('user-agent');
         if (is_array($userAgent) && count($userAgent) > 0) {
             $debugInfo['user_agent'] = $userAgent[0];

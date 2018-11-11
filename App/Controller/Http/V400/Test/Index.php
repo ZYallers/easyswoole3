@@ -6,11 +6,11 @@
  * Time: 下午7:25
  */
 
-namespace App\HttpController\V400\Test;
+namespace App\Controller\Http\V400\Test;
 
 
 use App\Cache\User\UserInfo;
-use App\HttpController\Base;
+use App\Controller\Http\Base;
 use App\Service\Note\Notes;
 use App\Utility\Curl;
 use EasySwoole\EasySwoole\Config;
@@ -28,13 +28,6 @@ class Index extends Base
     public function userinfo()
     {
         $User = (new UserInfo())->getUserInfo('13670896425');
-        $this->writeJson(200, $User);
-    }
-
-    public function userinfo2()
-    {
-        $User = UserInfo::getInstance()->getUserInfo('13670896425');
-        UserInfo::getInstance()->freeCache();
         $this->writeJson(200, $User);
     }
 

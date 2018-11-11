@@ -6,7 +6,7 @@
  * Time: 下午3:13
  */
 
-namespace App\HttpController;
+namespace App\Controller\Http;
 
 class Index extends Base
 {
