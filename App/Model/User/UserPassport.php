@@ -11,9 +11,9 @@ namespace App\Model\User;
 use App\Utility\Abst\Model;
 use App\Utility\Pool\Mysql\Enjoythin;
 
-class UseInfo extends Model
+class UserPassport extends Model
 {
-    public $tableName = 'et_user_info';
+    public $tableName = 'et_user_passport';
 
     public function __construct(string $className = null)
     {

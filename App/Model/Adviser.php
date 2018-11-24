@@ -6,14 +6,14 @@
  * Time: 下午12:38
  */
 
-namespace App\Model\User;
+namespace App\Model;
 
 use App\Utility\Abst\Model;
 use App\Utility\Pool\Mysql\Enjoythin;
 
-class UseInfo extends Model
+class Adviser extends Model
 {
-    public $tableName = 'et_user_info';
+    public $tableName = 'et_adviser';
 
     public function __construct(string $className = null)
     {

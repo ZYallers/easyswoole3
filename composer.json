@@ -7,6 +7,12 @@
   "require": {
     "easyswoole/easyswoole": "3.x-dev",
     "easyswoole/swoole-ide-helper": "^1.03",
-    "easyswoole/mysqli": "^1.0"
+    "easyswoole/mysqli": "^1.1"
+  },
+  "repositories": {
+    "packagist": {
+      "type": "composer",
+      "url": "https://packagist.phpcomposer.com"
+    }
   }
 }

@@ -19,13 +19,13 @@ class Curl
 
     /**
      * @param string $method
-     * @param string $url
+     * @param string $uri
      * @param array|null $params
      * @return Response
      */
-    public function request(string $method, string $url, array $params = null): Response
+    public function request(string $method, string $uri, array $params = null): Response
     {
-        $request = new Request($url);
+        $request = new Request($uri);
         switch (strtoupper($method)) {
             case 'GET' :
                 if ($params && isset($params['query'])) {
@@ -65,5 +65,4 @@ class Curl
 
         return $request->exec();
     }
-
 }

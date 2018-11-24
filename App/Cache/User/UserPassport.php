@@ -9,10 +9,9 @@
 namespace App\Cache\User;
 
 use App\Cache\KeyConst;
-use App\Model\User\UseInfo;
 use App\Utility\Pool\Redis\Cache;
 
-class UserInfo extends \App\Utility\Abst\Cache
+class UserPassport extends \App\Utility\Abst\Cache
 {
     public function __construct(string $className = null)
     {
@@ -21,12 +20,12 @@ class UserInfo extends \App\Utility\Abst\Cache
 
     public function getByUserId(int $userId): ?array
     {
-        $key = KeyConst::USER_INFO_PREFIX . $userId;
+        $key = KeyConst::USER_PASSPORT_INFO_PREFIX . $userId;
         $Redis = $this->getCache();
         if ($Redis->exists($key)) {
             return json_decode($Redis->get($key), true);
         } else {
-            $row = (new UseInfo())->getOneByWhere([['user_id', $userId]]);
+            $row = (new \App\Model\User\UserPassport())->getOneByWhere([['user_id', $userId]]);
             $ttl = is_null($row) ? $this->getNullTtl() : $this->getRandomTtl();
             $Redis->setex($key, $ttl, json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             return $row;

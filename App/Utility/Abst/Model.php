@@ -6,16 +6,17 @@
  * Time: 下午12:42
  */
 
-namespace App\Model;
+namespace App\Utility\Abst;
 
 use App\Utility\Pool\MysqlObject;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Config;
 
-abstract class Base
+abstract class Model
 {
     private $db;
     private $className;
+    protected $tableName;
 
     protected function __construct(string $className)
     {
@@ -42,10 +43,18 @@ abstract class Base
     {
         // TODO: Implement __destruct() method.
         if ($this->db instanceof MysqlObject) {
-            if (Config::getInstance()->getConf('app.debug')) {
-                echo 'At ' . date('Y-m-d H:i:s') . ', LastQuery: [' . $this->db->getLastQuery() . '], Mysql pool recycle.' . "\n";
-            }
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->db);
+            if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+                echo '[' . date('Y-m-d H:i:s') . '] Mysql pool recycle. LastQuery: [' . $this->db->getLastQuery() . '].' . PHP_EOL;
+            }
         }
+    }
+
+    public function getOneByWhere(array $where): ?array
+    {
+        foreach ($where as $item) {
+            call_user_func_array([$this->db, 'where'], $item);
+        }
+        return $this->db->getOne($this->tableName);
     }
 }

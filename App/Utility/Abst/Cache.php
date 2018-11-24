@@ -6,13 +6,13 @@
  * Time: 下午12:42
  */
 
-namespace App\Cache;
+namespace App\Utility\Abst;
 
 use App\Utility\Pool\RedisObject;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Config;
 
-abstract class Base
+abstract class Cache
 {
     private $cache;
     private $className;
@@ -42,10 +42,21 @@ abstract class Base
     {
         // TODO: Implement __destruct() method.
         if ($this->cache instanceof RedisObject) {
-            if (Config::getInstance()->getConf('app.debug')) {
-                echo 'At ' . date('Y-m-d H:i:s') . ', Redis pool recycle.' . "\n";
-            }
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->cache);
+            if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+                echo '[' . date('Y-m-d H:i:s') . '] Redis pool recycle.' . "\n";
+            }
         }
+    }
+
+    protected function getRandomTtl(int $maxDay = 5): int
+    {
+        mt_srand();
+        return mt_rand(($maxDay - 1) * 86400, $maxDay * 86400);
+    }
+
+    protected function getNullTtl(): int
+    {
+        return 60;
     }
 }

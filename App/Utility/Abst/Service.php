@@ -6,11 +6,11 @@
  * Time: 下午12:42
  */
 
-namespace App\Service;
+namespace App\Utility\Abst;
 
 use EasySwoole\Component\Singleton;
 
-abstract class Base
+abstract class Service
 {
     use Singleton;
 }

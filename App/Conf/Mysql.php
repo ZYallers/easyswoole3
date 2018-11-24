@@ -8,14 +8,14 @@
 
 return [
     'enjoythin' => [
-        'host' => '127.0.0.1',
+        'host' => '',
         'port' => 3306,
-        'user' => 'root',
-        'timeout' => 5,
+        'user' => '',
+        'timeout' => 3,
         'charset' => 'utf8',
-        'password' => 'root',
-        'database' => 'test',
-        'POOL_MAX_NUM' => 4,
+        'password' => '',
+        'database' => '',
+        'POOL_MAX_NUM' => 32,
         'POOL_TIME_OUT' => 0.1,
     ]
 ];
