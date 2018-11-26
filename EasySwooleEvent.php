@@ -27,7 +27,7 @@ class EasySwooleEvent implements Event
 
     private static function loadAppConf(): void
     {
-        $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Conf');
+        $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
         if (is_array($files)) {
             foreach ($files['files'] as $file) {
                 Config::getInstance()->loadFile($file);
