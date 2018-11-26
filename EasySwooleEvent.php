@@ -130,6 +130,10 @@ class EasySwooleEvent implements Event
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_NAMESPACE, 'App\\Controller\\Http\\'); //配置控制器命名空间
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5); //配置http控制器最大解析层级，默认为5层
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15); //http控制器对象池最大数量，默认为15个
+
+        // 注入日志处理类
+        Logger::getInstance()->setLoggerWriter(new \App\Utility\Logger());
+        
         // 注入连接池
         PoolManager::getInstance()->register(Enjoythin::class, Config::getInstance()->getConf('mysql.enjoythin.POOL_MAX_NUM'));
         PoolManager::getInstance()->register(Cache::class, Config::getInstance()->getConf('redis.cache.POOL_MAX_NUM'));
