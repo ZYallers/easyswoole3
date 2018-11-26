@@ -11,7 +11,7 @@ return [
         'host' => '',
         'port' => 6379,
         'auth' => '',
-        'POOL_MAX_NUM' => 32,
+        'POOL_MAX_NUM' => 64,
         'POOL_TIME_OUT' => 0.1,
     ],
     'session' => [

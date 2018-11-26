@@ -193,8 +193,18 @@ class Index extends Controller
             $comInfos = [];
         }
         for ($i = 0; $i < $len; $i++) {
-            $userInfos[] = $userChan->pop();
-            $brmInfos[] = $brmChan->pop();
+            if ($rev = $userChan->pop()) {
+                $userInfos[] = $rev;
+            }
+            if ($rev = $brmChan->pop()) {
+                $brmInfos[] = $rev;
+            }
+        }
+        $userChan->close();
+        $brmChan->close();
+
+        if (($len = count($userInfos)) === 0) {
+            return $this->writeJson(Code::OK);
         }
 
         $advChan = new Channel($len);
@@ -225,18 +235,65 @@ class Index extends Controller
             $comInfos = [];
         }
         for ($i = 0; $i < $len; $i++) {
-            $advInfos[] = $advChan->pop();
-            $innInfos[] = $innChan->pop();
+            if ($rev = $advChan->pop()) {
+                $advInfos[] = $rev;
+            }
+            if ($rev = $innChan->pop()) {
+                $innInfos[] = $rev;
+            }
             if ($fromWhere != 'admin') {
-                $comInfos[] = $comChan->pop();
+                if ($rev = $comChan->pop()) {
+                    $comInfos[] = $rev;
+                }
             }
         }
+        $advChan->close();
+        $innChan->close();
+        if ($fromWhere != 'admin') {
+            $comChan->close();
+        }
 
-        $len = count($userInfos);
         $infoChan = new Channel($len);
         foreach ($userInfos as $info) {
             \go(function () use ($infoChan, $info, $loginUserId, $fromWhere, $needMobile, $brmInfos, $comInfos, $advInfos, $innInfos) {
                 $infoUserId = $info['user_id'];
+
+                $chan = new Channel(1);
+                \go(function () use ($chan, $info, $infoUserId, $loginUserId, $fromWhere) {
+                    if ($fromWhere != 'admin') {
+                        // 是不是当前登录用户的顾问
+                        $info['is_my_adviser'] = '0';
+                        if (isset($info['adviser_info']['brm_id']) && $loginUserId > 0 && $loginUserId != $infoUserId) {
+                            $loginUserBrmInfo = (new \App\Service\Brm\UserInfo())->getByUserId($loginUserId);
+                            if (isset($loginUserBrmInfo) && $loginUserBrmInfo['brm_adviser_id'] == $info['adviser_info']['brm_id']) {
+                                $loginUserAdvInfo = (new Adviser())->getInfoByUserId($loginUserId);
+                                if (!isset($loginUserAdvInfo)) {
+                                    $info['is_my_adviser'] = '1';
+                                }
+                            }
+                        }
+                        // TODO::是否能聊天，未完成迁移
+                        $info['can_im'] = '0';
+                    } else {
+                        $advInfo = (new Adviser())->getInfoByUserId($infoUserId);
+                        if (isset($advInfo['brm_id'])) {
+                            $info['chat_account'] = 'brm-' . $advInfo['brm_id'];
+                        } else {
+                            $upInfo = (new UserPassport())->getByUserId($infoUserId);
+                            $info['chat_account'] = isset($upInfo['openim_account']) ? $upInfo['openim_account'] : '';
+                        }
+                    }
+                    $chan->push($info);
+                });
+
+                if ($fromWhere != 'admin') {
+                    $info['fans_num'] = isset($comInfos[$infoUserId]['zFansCount']) ? $comInfos[$infoUserId]['zFansCount'] . '' : '0';
+                    $info['follows_num'] = isset($comInfos[$infoUserId]['zFollowsCount']) ? $comInfos[$infoUserId]['zFollowsCount'] . '' : '0';
+                    $info['is_follow'] = isset($comInfos[$infoUserId]['isFollow']) ? $comInfos[$infoUserId]['isFollow'] . '' : 'no';
+                    $info['pullblacked'] = isset($comInfos[$infoUserId]['pullblacked']) ? $comInfos[$infoUserId]['pullblacked'] . '' : 'no';
+                    $info['is_pullblack'] = isset($comInfos[$infoUserId]['is_pullblack']) ? $comInfos[$infoUserId]['is_pullblack'] . '' : 'no';
+                }
+
                 if (isset($info['mobile']) && !$needMobile) {
                     unset($info['mobile']);
                 }
@@ -271,36 +328,12 @@ class Index extends Controller
                     $info['brm_username'] = isset($brmInfos[$infoUserId]['realname']) ? $brmInfos[$infoUserId]['realname'] : '';
                     $info['encode_phone'] = isset($brmInfos[$infoUserId]['encode_phone']) ? $brmInfos[$infoUserId]['encode_phone'] : '';
                 }
-                if ($fromWhere != 'admin') {
-                    $info['fans_num'] = isset($comInfos[$infoUserId]['zFansCount']) ? $comInfos[$infoUserId]['zFansCount'] . '' : '0';
-                    $info['follows_num'] = isset($comInfos[$infoUserId]['zFollowsCount']) ? $comInfos[$infoUserId]['zFollowsCount'] . '' : '0';
-                    $info['is_follow'] = isset($comInfos[$infoUserId]['isFollow']) ? $comInfos[$infoUserId]['isFollow'] . '' : 'no';
-                    $info['pullblacked'] = isset($comInfos[$infoUserId]['pullblacked']) ? $comInfos[$infoUserId]['pullblacked'] . '' : 'no';
-                    $info['is_pullblack'] = isset($comInfos[$infoUserId]['is_pullblack']) ? $comInfos[$infoUserId]['is_pullblack'] . '' : 'no';
 
-                    // 是不是当前登录用户的顾问
-                    $info['is_my_adviser'] = '0';
-                    if (isset($info['adviser_info']['brm_id']) && $loginUserId > 0 && $loginUserId != $infoUserId) {
-                        $loginUserBrmInfo = (new \App\Service\Brm\UserInfo())->getByUserId($loginUserId);
-                        if (isset($loginUserBrmInfo) && $loginUserBrmInfo['brm_adviser_id'] == $info['adviser_info']['brm_id']) {
-                            $loginUserAdvInfo = (new Adviser())->getInfoByUserId($loginUserId);
-                            if (!isset($loginUserAdvInfo)) {
-                                $info['is_my_adviser'] = '1';
-                            }
-                        }
-                    }
-
-                    // TODO::是否能聊天， 未完成迁移
-                    $info['can_im'] = '0';
-                } else {
-                    $advInfo = (new Adviser())->getInfoByUserId($infoUserId);
-                    if (isset($advInfo['brm_id'])) {
-                        $info['chat_account'] = 'brm-' . $advInfo['brm_id'];
-                    } else {
-                        $upInfo = (new UserPassport())->getByUserId($infoUserId);
-                        $info['chat_account'] = isset($upInfo['openim_account']) ? $upInfo['openim_account'] : '';
-                    }
+                if ($rev = $chan->pop()) {
+                    $info = array_merge($info, $rev);
+                    $chan->close();
                 }
+
                 $infoChan->push([$infoUserId => $info]);
             });
         }
@@ -309,6 +342,7 @@ class Index extends Controller
         for ($i = 0; $i < $len; $i++) {
             $users[] = $infoChan->pop();
         }
+        $infoChan->close();
 
         $this->writeJson(Code::OK, ['users' => $users]);
     }
