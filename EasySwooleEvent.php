@@ -8,7 +8,6 @@
 
 namespace EasySwoole\EasySwoole;
 
-use App\Process\ProcessTest;
 use App\Throwable\Handler;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
@@ -133,7 +132,7 @@ class EasySwooleEvent implements Event
 
         // 注入日志处理类
         Logger::getInstance()->setLoggerWriter(new \App\Utility\Logger());
-        
+
         // 注入连接池
         PoolManager::getInstance()->register(Enjoythin::class, Config::getInstance()->getConf('mysql.enjoythin.POOL_MAX_NUM'));
         PoolManager::getInstance()->register(Cache::class, Config::getInstance()->getConf('redis.cache.POOL_MAX_NUM'));
@@ -153,7 +152,7 @@ class EasySwooleEvent implements Event
         });
 
         // 注册自定义进程
-        //ServerManager::getInstance()->getSwooleServer()->addProcess((new ProcessTest('test_process'))->getProcess());
+        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\ProcessTest('test_process'))->getProcess());
     }
 
     public static function onRequest(Request $request, Response $response): bool

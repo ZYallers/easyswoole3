@@ -13,6 +13,34 @@ use EasySwoole\EasySwoole\Config;
 
 class Pub
 {
+    static function pushDingtalkMsg(string $msg, string $type = 'debug', int $time = null, string $file = null
+        , int $line = null, string $ip = null, string $uri = null, string $userAgent = null): void
+    {
+        $Conf = Config::getInstance();
+        $env = $Conf->getConf('RUN_MODE');
+        $appName = $Conf->getConf('app.name');
+        $title = "[{$appName}/{$env}: {$type}] {$msg}";
+        $text = ["### {$msg}", '> `App:` ' . $appName, '`Env:` ' . $env, '`Type:` ' . $type,
+            '`Time:` ' . date('Y.n.j H:i:s', isset($time) ? $time : time())];
+        if (isset($file)) {
+            $text[] = '`File:` ' . $file;
+        }
+        if (isset($line)) {
+            $text[] = '`Line:` ' . $line;
+        }
+        if (isset($ip)) {
+            $text[] = '`IP:` ' . $ip;
+        }
+        if (isset($uri)) {
+            $text[] = '`Uri:` ' . $uri;
+        }
+        if (isset($userAgent)) {
+            $text[] = '`UserAgent:` ' . $userAgent;
+        }
+        $body = ['msgtype' => 'markdown', 'markdown' => ['title' => $title, 'text' => join('  ' . PHP_EOL, $text)]];
+        Curl::getInstance()->request('post', $Conf->getConf('app.dingtalk.uri'), ['body' => json_encode($body)]);
+    }
+
     /**
      * getOssUri
      * @param string $uri
@@ -70,9 +98,12 @@ class Pub
      * @param string $tokenKey
      * @return array|null
      */
-    static function requestWithSign(string $method, string $uri, array $params = null, string $tokenKey = 'acol$!z%wh'): ?array
+    static function requestWithSign(string $method, string $uri, array $params = null, string $tokenKey = null): ?array
     {
         $now = time();
+        if (is_null($tokenKey)) {
+            $tokenKey = Config::getInstance()->getConf('app.token.key');
+        }
         if (strtoupper($method) == 'POST') {
             $params['form_params']['utime'] = $now;
             $params['form_params']['from_where'] = 'admin';
@@ -89,6 +120,6 @@ class Pub
             }
         }
         $body = Curl::getInstance()->request($method, $uri, $params)->getBody();
-        return $body ? json_decode($body, true) : null;
+        return !empty($body) ? json_decode($body, true) : null;
     }
 }
