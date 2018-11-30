@@ -170,6 +170,7 @@ class EasySwooleEvent implements Event
                 mkdir($dir, 0777, true);
             }
             $logFile = $dir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
+            Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
             ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
             $register->add($register::onConnect, function (\swoole_server $server, int $fd) {
@@ -181,6 +182,7 @@ class EasySwooleEvent implements Event
             });
         } else {
             // 生产模式下丢弃swoole错误日志
+            Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', '/dev/null');
             ServerManager::getInstance()->getSwooleServer()->set(['log_file' => '/dev/null']);
         }
 
