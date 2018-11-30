@@ -8,6 +8,7 @@
 
 namespace App\Utility\Abst;
 
+use App\Utility\AppConst;
 use App\Utility\Pool\MysqlObject;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Config;
@@ -44,7 +45,7 @@ abstract class Model
         // TODO: Implement __destruct() method.
         if ($this->db instanceof MysqlObject) {
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->db);
-            if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
                 echo '[' . date('Y-m-d H:i:s') . '] Mysql pool recycle. LastQuery: [' . $this->db->getLastQuery() . '].' . PHP_EOL;
             }
         }

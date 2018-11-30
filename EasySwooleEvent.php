@@ -8,6 +8,7 @@
 
 namespace EasySwoole\EasySwoole;
 
+use App\Utility\AppConst;
 use App\Utility\Throwable\Handler;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
@@ -151,14 +152,37 @@ class EasySwooleEvent implements Event
 
     public static function mainServerCreate(EventRegister $register)
     {
+
         // TODO: Implement mainServerCreate() method.
         // 天天都在问的服务热重启 单独启动一个进程处理
-        /*if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+        /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
 
         // 注册自定义进程
         //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Utility\Process\ProcessTest('test_process'))->getProcess());
+
+        // 主swoole服务修改配置
+        if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
+            // 开发模式设置swoole错误日志文件
+            $dir = Config::getInstance()->getConf('LOG_DIR') . '/' . date('Ymd');
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+            $logFile = $dir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
+            ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
+
+            $register->add($register::onConnect, function (\swoole_server $server, int $fd) {
+                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' connect ---------------' . PHP_EOL;
+            });
+
+            $register->add($register::onClose, function (\swoole_server $server, int $fd) {
+                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' close ---------------' . PHP_EOL;
+            });
+        } else {
+            // 生产模式下丢弃swoole错误日志
+            ServerManager::getInstance()->getSwooleServer()->set(['log_file' => '/dev/null']);
+        }
 
         $register->add($register::onWorkerStart, function (\swoole_server $server, int $fd) {
             // 此数组中的文件表示进程启动前就加载了，所以无法reload
@@ -166,14 +190,6 @@ class EasySwooleEvent implements Event
             self::loadAppConfigFile(['app', 'param', 'router']);
             echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' start ---------------' . PHP_EOL;
         });
-        if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
-            $register->add($register::onConnect, function (\swoole_server $server, int $fd) {
-                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' connect ---------------' . PHP_EOL;
-            });
-            $register->add($register::onClose, function (\swoole_server $server, int $fd) {
-                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' close ---------------' . PHP_EOL;
-            });
-        }
     }
 
     public static function onRequest(Request $request, Response $response): bool

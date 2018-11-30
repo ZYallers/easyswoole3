@@ -9,6 +9,7 @@
 namespace App\Utility\Abst;
 
 use App\Cache\Session;
+use App\Utility\AppConst;
 use App\Utility\Code;
 use EasySwoole\EasySwoole\Config;
 
@@ -50,7 +51,7 @@ abstract class Controller extends \EasySwoole\Http\AbstractInterface\Controller
                 $msg = Code::getReasonPhrase($statusCode);
             }
             $data = ['code' => $statusCode, 'data' => $data, 'msg' => is_null($msg) ? '' : $msg];
-            if (Config::getInstance()->getConf('RUN_MODE') == 'develop' || $this->request()->getRequestParam('debug') == 'on') {
+            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV || $this->request()->getRequestParam('debug') == 'on') {
                 $data['debug'] = $this->getDebugData();
             }
             $this->response()->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

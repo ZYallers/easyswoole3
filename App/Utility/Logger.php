@@ -17,14 +17,13 @@ class Logger implements LoggerWriterInterface
     public function writeLog($obj, $logCategory, $timeStamp)
     {
         // TODO: Implement writeLog() method.
-        $appName = Config::getInstance()->getConf('app.name');
         $logDir = Config::getInstance()->getConf('LOG_DIR');
-        $dir = $logDir . DIRECTORY_SEPARATOR . date('Ymd', $timeStamp);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+        $baseDir = $logDir . '/' . date('Ymd', $timeStamp);
+        if (!is_dir($baseDir)) {
+            mkdir($baseDir, 0777, true);
         }
         $str = '[' . date('Y/m/d H:i:s', $timeStamp) . ']: ' . $obj . PHP_EOL;
-        $filePath = $dir . DIRECTORY_SEPARATOR . $appName . '.' . $logCategory . '.log';
+        $filePath = $baseDir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.' . $logCategory . '.log';
         file_put_contents($filePath, $str, FILE_APPEND | LOCK_EX);
     }
 }

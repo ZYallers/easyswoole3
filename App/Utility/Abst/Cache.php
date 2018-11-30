@@ -8,6 +8,7 @@
 
 namespace App\Utility\Abst;
 
+use App\Utility\AppConst;
 use App\Utility\Pool\RedisObject;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Config;
@@ -43,7 +44,7 @@ abstract class Cache
         // TODO: Implement __destruct() method.
         if ($this->cache instanceof RedisObject) {
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->cache);
-            if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
                 echo '[' . date('Y-m-d H:i:s') . '] Redis pool recycle.' . "\n";
             }
         }
