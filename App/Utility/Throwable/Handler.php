@@ -6,7 +6,7 @@
  * Time: 下午3:35
  */
 
-namespace App\Throwable;
+namespace App\Utility\Throwable;
 
 use App\Utility\Pub;
 use EasySwoole\EasySwoole\Config;

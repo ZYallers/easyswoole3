@@ -6,8 +6,7 @@
  * Time: 下午8:35
  */
 
-namespace App\Process;
-
+namespace App\Utility\Process;
 
 use EasySwoole\EasySwoole\Swoole\Process\AbstractProcess;
 use Swoole\Process;

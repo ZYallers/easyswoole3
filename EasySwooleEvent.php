@@ -8,7 +8,7 @@
 
 namespace EasySwoole\EasySwoole;
 
-use App\Throwable\Handler;
+use App\Utility\Throwable\Handler;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
 use App\Utility\Pool\Redis\Cache;
@@ -23,13 +23,17 @@ use EasySwoole\Utility\File;
 
 class EasySwooleEvent implements Event
 {
-
-    private static function loadAppConf(): void
+    private static function loadAppConfigFile(?array $include = null): void
     {
-        $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
-        if (is_array($files)) {
-            foreach ($files['files'] as $file) {
-                Config::getInstance()->loadFile($file);
+        if (isset($include)) {
+            $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
+            if (is_array($files)) {
+                foreach ($files['files'] as $file) {
+                    $basename = strtolower(basename($file, '.php'));
+                    if (in_array($basename, $include)) {
+                        Config::getInstance()->loadFile($file);
+                    }
+                }
             }
         }
     }
@@ -121,18 +125,24 @@ class EasySwooleEvent implements Event
     public static function initialize()
     {
         // TODO: Implement initialize() method.
+        // 设置时区
         date_default_timezone_set('Asia/Shanghai');
-        self::loadAppConf(); //载入Conf文件夹中的所有的配置文件
-        Di::getInstance()->set(SysConst::ERROR_HANDLER, [Handler::class, 'errorHandler']); //配置错误处理回调
-        Di::getInstance()->set(SysConst::SHUTDOWN_FUNCTION, [Handler::class, 'shutDownHandler']); //配置脚本结束回调
-        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'httpExceptionhandler']); //配置http控制器异常回调
-        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_NAMESPACE, 'App\\Controller\\Http\\'); //配置控制器命名空间
-        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5); //配置http控制器最大解析层级，默认为5层
-        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15); //http控制器对象池最大数量，默认为15个
-
+        // 载入Config文件夹中的配置文件
+        self::loadAppConfigFile(['oss', 'mysql', 'redis']);
+        // 配置错误处理回调
+        Di::getInstance()->set(SysConst::ERROR_HANDLER, [Handler::class, 'errorHandler']);
+        // 配置脚本结束回调
+        Di::getInstance()->set(SysConst::SHUTDOWN_FUNCTION, [Handler::class, 'shutDownHandler']);
+        // 配置http控制器异常回调
+        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'httpExceptionhandler']);
+        // 配置控制器命名空间
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_NAMESPACE, 'App\\Controller\\Http\\');
+        // 配置http控制器最大解析层级，默认为5层
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
+        // 配置http控制器对象池最大数量，默认为15个
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15);
         // 注入日志处理类
         Logger::getInstance()->setLoggerWriter(new \App\Utility\Logger());
-
         // 注入连接池
         PoolManager::getInstance()->register(Enjoythin::class, Config::getInstance()->getConf('mysql.enjoythin.POOL_MAX_NUM'));
         PoolManager::getInstance()->register(Cache::class, Config::getInstance()->getConf('redis.cache.POOL_MAX_NUM'));
@@ -147,12 +157,23 @@ class EasySwooleEvent implements Event
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
 
-        $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
-            echo '--------------- worker ' . $workerId . ' start ---------------' . PHP_EOL;
-        });
-
         // 注册自定义进程
-        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\ProcessTest('test_process'))->getProcess());
+        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Utility\Process\ProcessTest('test_process'))->getProcess());
+
+        $register->add($register::onWorkerStart, function (\swoole_server $server, int $fd) {
+            // 此数组中的文件表示进程启动前就加载了，所以无法reload
+            //var_dump(get_included_files());
+            self::loadAppConfigFile(['app', 'param', 'router']);
+            echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' start ---------------' . PHP_EOL;
+        });
+        if (Config::getInstance()->getConf('RUN_MODE') == 'develop') {
+            $register->add($register::onConnect, function (\swoole_server $server, int $fd) {
+                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' connect ---------------' . PHP_EOL;
+            });
+            $register->add($register::onClose, function (\swoole_server $server, int $fd) {
+                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' close ---------------' . PHP_EOL;
+            });
+        }
     }
 
     public static function onRequest(Request $request, Response $response): bool
