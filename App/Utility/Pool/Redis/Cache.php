@@ -17,16 +17,23 @@ class Cache extends AbstractPool
     protected function createObject()
     {
         // TODO: Implement createObject() method.
-        $redis = new RedisObject();
-        $conf = Config::getInstance()->getConf('redis.cache');
-        if ($redis->connect($conf['host'], $conf['port'])) {
-            if (!empty($conf['auth'])) {
-                $redis->auth($conf['auth']);
+        /**
+         * 创建对象的时候，请加try，尽量不要抛出异常
+         */
+        $return = null;
+        try {
+            $redis = new RedisObject();
+            $conf = Config::getInstance()->getConf('redis.cache');
+            if ($redis->connect($conf['host'], $conf['port'])) {
+                if (!empty($conf['auth'])) {
+                    $redis->auth($conf['auth']);
+                }
+                $return = $redis;
             }
-            return $redis;
-        } else {
-            return null;
+        } catch (\Throwable $throwable) {
+            // to do something...
+        } finally {
+            return $return;
         }
-        return $Redis;
     }
 }

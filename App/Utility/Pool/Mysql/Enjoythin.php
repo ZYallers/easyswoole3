@@ -20,8 +20,16 @@ class Enjoythin extends AbstractPool
     protected function createObject()
     {
         // TODO: Implement createObject() method.
-        $conf = Config::getInstance()->getConf('mysql.enjoythin');
-        $dbconf = new \EasySwoole\Mysqli\Config($conf);
-        return new MysqlObject($dbconf);
+        /**
+         * 创建对象的时候，请加try，尽量不要抛出异常
+         */
+        $return = null;
+        try {
+            $return = new MysqlObject(new \EasySwoole\Mysqli\Config(Config::getInstance()->getConf('mysql.enjoythin')));
+        } catch (\Throwable $throwable) {
+            // to do something...
+        } finally {
+            return $return;
+        }
     }
 }
