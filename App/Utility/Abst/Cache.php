@@ -8,7 +8,6 @@
 
 namespace App\Utility\Abst;
 
-use App\Utility\AppConst;
 use App\Utility\Pool\RedisObject;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Config;
@@ -17,16 +16,19 @@ abstract class Cache
 {
     private $cache;
     private $className;
+    private $tryTimes = 3;
 
     public function __construct(string $className)
     {
         $this->className = $className;
-        $timeout = Config::getInstance()->getConf('redis.' . strtolower(basename(str_replace('\\', '/', $this->className))) . '.POOL_TIME_OUT');
-        $cache = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
-        if ($cache instanceof RedisObject) {
-            $this->cache = $cache;
-        } else {
-            throw new \Exception('Redis pool is empty');
+        $key = strtolower(basename(str_replace('\\', '/', $this->className)));
+        $timeout = Config::getInstance()->getConf('redis.' . $key . '.POOL_TIME_OUT');
+        for ($i = 0; $i < $this->tryTimes; $i++) {
+            $cache = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
+            if ($cache instanceof RedisObject) {
+                $this->cache = $cache;
+                break;
+            }
         }
     }
 
@@ -44,9 +46,9 @@ abstract class Cache
         // TODO: Implement __destruct() method.
         if ($this->cache instanceof RedisObject) {
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->cache);
-            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
+            /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
                 echo '[' . date('Y-m-d H:i:s') . '] Redis pool recycle.' . "\n";
-            }
+            }*/
         }
     }
 

@@ -17,17 +17,20 @@ abstract class Model
 {
     private $db;
     private $className;
+    private $tryTimes = 3;
     protected $tableName;
 
     protected function __construct(string $className)
     {
         $this->className = $className;
-        $timeout = Config::getInstance()->getConf('mysql.' . strtolower(basename(str_replace('\\', '/', $this->className))) . '.POOL_TIME_OUT');
-        $db = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
-        if ($db instanceof MysqlObject) {
-            $this->db = $db;
-        } else {
-            throw new \Exception('Mysql pool is empty');
+        $key = strtolower(basename(str_replace('\\', '/', $this->className)));
+        $timeout = Config::getInstance()->getConf('mysql.' . $key . '.POOL_TIME_OUT');
+        for ($i = 0; $i < $this->tryTimes; $i++) {
+            $db = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
+            if ($db instanceof MysqlObject) {
+                $this->db = $db;
+                break;
+            }
         }
     }
 
@@ -45,9 +48,9 @@ abstract class Model
         // TODO: Implement __destruct() method.
         if ($this->db instanceof MysqlObject) {
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->db);
-            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
+            /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
                 echo '[' . date('Y-m-d H:i:s') . '] Mysql pool recycle. LastQuery: [' . $this->db->getLastQuery() . '].' . PHP_EOL;
-            }
+            }*/
         }
     }
 
