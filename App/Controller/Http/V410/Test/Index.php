@@ -28,13 +28,7 @@ class Index extends Controller
 {
     public function banben()
     {
-        /*var_dump(date('Y-m-d H:i:s'));
-        $ps = new Process(function(){
-            sleep(3);
-            var_dump(date('Y-m-d H:i:s').':  333');
-        }, false, false);
-        $ps->start();*/
-        $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 2]);
+        $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 8]);
     }
 
     public function routers()
@@ -58,7 +52,7 @@ class Index extends Controller
         $chan = new Channel(3);
         \go(function () use ($chan) {
             Coroutine::sleep(3);
-            $chan->push(['www.qq.com' => '1']);
+            $chan->push(['www.qq.com11' => '1']);
         });
 
         \go(function () use ($chan) {
@@ -85,7 +79,7 @@ class Index extends Controller
         $this->writeJson(Code::OK, $data);
     }
 
-    private static function ptss()
+    private function ptss()
     {
         $p1 = new Process(function (Process $worker) {
             echo date('Y.m.d H:i:s') . ": worker " . $worker->pid . " started....." . PHP_EOL;
@@ -133,7 +127,7 @@ class Index extends Controller
     public function ptest()
     {
         $data = [];
-        $data[] = self::ptss();
+        $data[] = $this->ptss();
         $this->writeJson(Code::OK, ['data' => $data]);
     }
 
@@ -149,14 +143,17 @@ class Index extends Controller
 
     public function isLogin()
     {
-        $this->checkLogin();
+        $userId = $this->checkLogin();
+        if (is_null($userId)) {
+            return $this->writeJson(Code::NOT_LOGIN);
+        }
         $this->writeJson();
     }
 
     public function utest()
     {
-        $user = (new UserInfo())->getUserInfo(434570);
-        $this->writeJson(200, ['user' => $user]);
+        $userInfo = UserInfo::getInstance()->getUserInfo(434570);
+        $this->writeJson(200, ['userinfo' => $userInfo]);
     }
 
     public function userinfo()
@@ -168,9 +165,9 @@ class Index extends Controller
 
         $userType = $this->request()->getRequestParam('user_type');
         $fromWhere = $this->request()->getRequestParam('from_where');
-        $loginUserId = $this->checkLogin(true);
+        $loginUserId = $this->checkLogin();
         $userIds = explode(',', $userIdStr);
-        $needMobile = ($this->checkMd5Token(true) || $fromWhere == 'admin') ? true : false;
+        $needMobile = ($this->checkMd5Token() == Code::OK || $fromWhere == 'admin') ? true : false;
 
         if (isset($userType) && intval($userType) != 1) {
             return $this->writeJson(Code::OK);

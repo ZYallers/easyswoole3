@@ -64,41 +64,33 @@ abstract class Controller extends \EasySwoole\Http\AbstractInterface\Controller
         }
     }
 
-    protected function checkLogin(bool $return = false)
+    protected function checkLogin(): ?int
     {
         $sid = $this->request()->getRequestParam('sess_token');
         $userInfo = (new Session())->getData($sid, 'userinfo');
-        $userId = isset($userInfo['userid']) ? $userInfo['userid'] : null;
-        if ($return) {
-            return $userId;
-        } else {
-            if (is_null($userId)) {
-                $this->writeJson(Code::NOT_LOGIN);
-            }
-        }
+        return isset($userInfo['userid']) ? intval($userInfo['userid']) : null;
     }
 
     /**
      * 简单的检验token封装，要求参数名必须是utime和token，规则是base64_encode(md5(utime.token_key))
-     * @param bool $return
-     * @return bool
+     * @return int
      */
-    protected function checkMd5Token(bool $return = false)
+    protected function checkMd5Token(): int
     {
-        // token超时时间为60秒
+        $now = time();
         $utime = $this->request()->getRequestParam('utime');
-        $token = Config::getInstance()->getConf('app.token');
-        if (isset($utime) && abs(time() - $utime) > $token['timeout']) {
-            $this->writeJson(Code::TOKEN_TIMEOUT);
-        }
         $sign = $this->request()->getRequestParam('sign');
-        if (!isset($sign) || !isset($utime) || $sign != base64_encode(md5($utime . $token['key']))) {
-            if ($return) {
-                return false;
-            } else {
-                $this->writeJson(Code::SIGN_INVAL);
-            }
+        if (!isset($utime) || !isset($sign) || $utime > $now) {
+            return Code::SIGN_INVAL;
         }
-        return true;
+        $token = Config::getInstance()->getConf('app.token');
+        if (($now - $utime) > $token['timeout']) {
+            return Code::TOKEN_TIMEOUT;
+        }
+
+        if ($sign != base64_encode(md5($utime . $token['key']))) {
+            return Code::SIGN_INVAL;
+        }
+        return Code::OK;
     }
 }

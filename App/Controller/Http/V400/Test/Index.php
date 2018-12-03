@@ -18,16 +18,15 @@ use EasySwoole\EasySwoole\Swoole\Task\TaskManager;
 
 class Index extends Controller
 {
+    public function banben()
+    {
+        $this->response()->write($this->request()->getUri()->getPath());
+    }
+
     public function allconfig()
     {
         $config = Config::getInstance()->toArray();
         $this->writeJson(Code::OK, $config);
-    }
-
-    public function userinfo()
-    {
-        $User = (new UserInfo())->getUserInfo('13670896425');
-        $this->writeJson(Code::OK, $User);
     }
 
     public function sleep()
@@ -63,10 +62,5 @@ class Index extends Controller
         $resp = Curl::getInstance()->request('get', 'http://ip.taobao.com/service/getIpInfo.php',
             ['query' => ['ip' => '121.40.81.149']]);
         $this->writeJson(Code::OK, ['body' => $resp->getBody(), 'error' => $resp->getError()]);
-    }
-
-    public function banben()
-    {
-        $this->response()->write($this->request()->getUri()->getPath());
     }
 }
