@@ -13,6 +13,8 @@ use App\Utility\Pub;
 
 class Community extends Service
 {
+    use \EasySwoole\Component\Singleton;
+
     public function getInfoByUserId(int $userId): ?array
     {
         $item = Pub::requestWithSign('get', 'https://community.hxsapp.com/user/userRelate/getBatchInfo', ['query' => ['user_ids' => $userId]]);

@@ -14,6 +14,8 @@ use EasySwoole\EasySwoole\Config;
 
 class UserInfo extends Service
 {
+    use \EasySwoole\Component\Singleton;
+
     public function getUserInfo(int $userId): ?array
     {
         $user = (new \App\Cache\User\UserInfo())->getByUserId($userId);

@@ -178,10 +178,10 @@ class Index extends Controller
         $brmChan = new Channel($len);
         foreach ($userIds as $userId) {
             \go(function () use ($userChan, $userId) {
-                $userChan->push((new UserInfo())->getUserInfo($userId));
+                $userChan->push(UserInfo::getInstance()->getUserInfo($userId));
             });
             \go(function () use ($brmChan, $userId) {
-                $brmChan->push([$userId => (new \App\Service\Brm\UserInfo())->getByUserId($userId)]);
+                $brmChan->push([$userId => \App\Service\Brm\UserInfo::getInstance()->getByUserId($userId)]);
             });
         }
         $userInfos = [];
@@ -215,14 +215,14 @@ class Index extends Controller
             }
             $userId = $info['user_id'];
             \go(function () use ($advChan, $userId) {
-                $advChan->push([$userId => (new Adviser())->getInfoByUserId($userId)]);
+                $advChan->push([$userId => Adviser::getInstance()->getInfoByUserId($userId)]);
             });
             \go(function () use ($innChan, $userId) {
-                $innChan->push([$userId => (new InnerVip())->getInfoByUserId($userId)]);
+                $innChan->push([$userId => InnerVip::getInstance()->getInfoByUserId($userId)]);
             });
             if ($fromWhere != 'admin') {
                 \go(function () use ($comChan, $userId) {
-                    $comChan->push([$userId => (new Community())->getInfoByUserId($userId)]);
+                    $comChan->push([$userId => Community::getInstance()->getInfoByUserId($userId)]);
                 });
             }
         }
@@ -261,9 +261,9 @@ class Index extends Controller
                         // 是不是当前登录用户的顾问
                         $info['is_my_adviser'] = '0';
                         if (isset($info['adviser_info']['brm_id']) && $loginUserId > 0 && $loginUserId != $infoUserId) {
-                            $loginUserBrmInfo = (new \App\Service\Brm\UserInfo())->getByUserId($loginUserId);
+                            $loginUserBrmInfo = \App\Service\Brm\UserInfo::getInstance()->getByUserId($loginUserId);
                             if (isset($loginUserBrmInfo) && $loginUserBrmInfo['brm_adviser_id'] == $info['adviser_info']['brm_id']) {
-                                $loginUserAdvInfo = (new Adviser())->getInfoByUserId($loginUserId);
+                                $loginUserAdvInfo = Adviser::getInstance()->getInfoByUserId($loginUserId);
                                 if (!isset($loginUserAdvInfo)) {
                                     $info['is_my_adviser'] = '1';
                                 }
@@ -272,11 +272,11 @@ class Index extends Controller
                         // TODO::是否能聊天，未完成迁移
                         $info['can_im'] = '0';
                     } else {
-                        $advInfo = (new Adviser())->getInfoByUserId($infoUserId);
+                        $advInfo = Adviser::getInstance()->getInfoByUserId($infoUserId);
                         if (isset($advInfo['brm_id'])) {
                             $info['chat_account'] = 'brm-' . $advInfo['brm_id'];
                         } else {
-                            $upInfo = (new UserPassport())->getByUserId($infoUserId);
+                            $upInfo = UserPassport::getInstance()->getByUserId($infoUserId);
                             $info['chat_account'] = isset($upInfo['openim_account']) ? $upInfo['openim_account'] : '';
                         }
                     }

@@ -14,7 +14,9 @@ use App\Utility\Pub;
 
 class UserInfo extends Service
 {
-    public function getByUserId($userId)
+    use \EasySwoole\Component\Singleton;
+    
+    public function getByUserId($userId): ?array
     {
         $up = (new UserPassport())->getByUserId($userId);
         if (is_null($up) || !isset($up['encode_phone']) || empty($up['encode_phone'])) {

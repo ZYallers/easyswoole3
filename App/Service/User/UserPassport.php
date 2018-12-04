@@ -12,6 +12,8 @@ use App\Utility\Abst\Service;
 
 class UserPassport extends Service
 {
+    use \EasySwoole\Component\Singleton;
+
     public function getByUserId(int $userId): ?array
     {
         $item = (new \App\Cache\User\UserPassport())->getByUserId($userId);

@@ -8,9 +8,8 @@
 
 namespace App\Utility\Abst;
 
-use EasySwoole\Component\Singleton;
 
 abstract class Service
 {
-    use Singleton;
+
 }

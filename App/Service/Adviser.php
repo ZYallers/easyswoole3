@@ -13,6 +13,8 @@ use App\Utility\Abst\Service;
 
 class Adviser extends Service
 {
+    use \EasySwoole\Component\Singleton;
+
     public function getInfoByUserId(int $userId): ?array
     {
         $item = (new \App\Cache\Adviser())->getByUserId($userId);
