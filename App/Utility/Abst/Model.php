@@ -56,8 +56,12 @@ abstract class Model
 
     public function getOneByWhere(array $where): ?array
     {
-        foreach ($where as $item) {
-            call_user_func_array([$this->db, 'where'], $item);
+        foreach ($where as $whereField => $whereProp) {
+            if (is_array($whereProp)) {
+                $this->db->where($whereField, ...$whereProp);
+            } else {
+                $this->db->where($whereField, $whereProp);
+            }
         }
         return $this->db->getOne($this->tableName);
     }

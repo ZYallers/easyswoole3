@@ -25,7 +25,7 @@ class UserPassport extends \App\Utility\Abst\Cache
         if ($Redis->exists($key)) {
             return json_decode($Redis->get($key), true);
         } else {
-            $row = (new \App\Model\User\UserPassport())->getOneByWhere([['user_id', $userId]]);
+            $row = (new \App\Model\User\UserPassport())->getOneByWhere(['user_id' => $userId]);
             $ttl = is_null($row) ? $this->getNullTtl() : $this->getRandomTtl();
             $Redis->setex($key, $ttl, json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             return $row;
