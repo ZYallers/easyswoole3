@@ -15,7 +15,7 @@ return [
         'charset' => 'utf8',
         'password' => '',
         'database' => '',
-        'POOL_MAX_NUM' => 32,
+        'POOL_MAX_NUM' => 8,
         'POOL_TIME_OUT' => 0.1,
     ]
 ];

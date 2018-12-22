@@ -6,7 +6,7 @@
  * Time: 上午10:33
  */
 
-namespace App\Utility\Process;
+namespace App\Process;
 
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\ServerManager;

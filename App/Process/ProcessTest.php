@@ -6,7 +6,7 @@
  * Time: 下午8:35
  */
 
-namespace App\Utility\Process;
+namespace App\Process;
 
 use EasySwoole\EasySwoole\Swoole\Process\AbstractProcess;
 use Swoole\Process;
@@ -18,6 +18,7 @@ class ProcessTest extends AbstractProcess
         // TODO: Implement run() method.
         echo "process is run.\n";
 
+        // 每5秒执行一次
         $this->addTick(5000, function () {
             echo date('Y-m-d H:i:s') . PHP_EOL;
         });

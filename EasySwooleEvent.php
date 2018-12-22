@@ -8,14 +8,16 @@
 
 namespace EasySwoole\EasySwoole;
 
+use App\Crontab\ThrowtablePushMsgTask;
 use App\Utility\AppConst;
-use App\Utility\Throwable\Handler;
+use App\Throwable\Handler;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
 use App\Utility\Pool\Redis\Cache;
 use App\Utility\Pool\Redis\Session;
 use EasySwoole\Component\Di;
 use EasySwoole\Component\Pool\PoolManager;
+use EasySwoole\EasySwoole\Crontab\Crontab;
 use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
 use EasySwoole\Http\Request;
@@ -159,8 +161,14 @@ class EasySwooleEvent implements Event
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
         }*/
 
+        // 注册暴力热启动进程
+        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload', ['disableInotify' => false]))->getProcess());
+
         // 注册自定义进程
-        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Utility\Process\ProcessTest('test_process'))->getProcess());
+        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\ProcessTest('test_process'))->getProcess());
+
+        // 注册异常消息推送定时任务
+        Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
 
         // 主swoole服务修改配置
         if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
@@ -213,7 +221,7 @@ class EasySwooleEvent implements Event
     {
         // TODO: Implement afterAction() method.
         // ========= Session更新处理 =========
-        \go(function () use ($request) {
+        go(function () use ($request) {
             $sid = $request->getRequestParam('sess_token');
             if (!empty($sid)) {
                 (new \App\Cache\Session())->refreshExpireTime($sid);
@@ -221,7 +229,7 @@ class EasySwooleEvent implements Event
         });
 
         // ========= 超过N秒记录到slow日志文件 =========
-        \go(function () use ($request) {
+        go(function () use ($request) {
             self::saveSlowLog($request);
         });
     }

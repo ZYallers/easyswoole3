@@ -28,6 +28,7 @@ class Index extends Controller
 {
     public function banben()
     {
+        dseed();
         $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 8]);
     }
 
@@ -50,17 +51,17 @@ class Index extends Controller
     {
         var_dump(date('Y.m.d H:i:s') . ': start!!!');
         $chan = new Channel(3);
-        \go(function () use ($chan) {
+        go(function () use ($chan) {
             Coroutine::sleep(3);
             $chan->push(['www.qq.com11' => '1']);
         });
 
-        \go(function () use ($chan) {
+        go(function () use ($chan) {
             Coroutine::sleep(3);
             $chan->push(['www.163.com' => '2']);
         });
 
-        \go(function () use ($chan) {
+        go(function () use ($chan) {
             Coroutine::sleep(3);
             $chan->push(['www.126.com' => '3']);
         });
@@ -177,10 +178,10 @@ class Index extends Controller
         $userChan = new Channel($len);
         $brmChan = new Channel($len);
         foreach ($userIds as $userId) {
-            \go(function () use ($userChan, $userId) {
+            go(function () use ($userChan, $userId) {
                 $userChan->push(UserInfo::getInstance()->getUserInfo($userId));
             });
-            \go(function () use ($brmChan, $userId) {
+            go(function () use ($brmChan, $userId) {
                 $brmChan->push([$userId => \App\Service\Brm\UserInfo::getInstance()->getByUserId($userId)]);
             });
         }
@@ -214,14 +215,14 @@ class Index extends Controller
                 continue;
             }
             $userId = $info['user_id'];
-            \go(function () use ($advChan, $userId) {
+            go(function () use ($advChan, $userId) {
                 $advChan->push([$userId => Adviser::getInstance()->getInfoByUserId($userId)]);
             });
-            \go(function () use ($innChan, $userId) {
+            go(function () use ($innChan, $userId) {
                 $innChan->push([$userId => InnerVip::getInstance()->getInfoByUserId($userId)]);
             });
             if ($fromWhere != 'admin') {
-                \go(function () use ($comChan, $userId) {
+                go(function () use ($comChan, $userId) {
                     $comChan->push([$userId => Community::getInstance()->getInfoByUserId($userId)]);
                 });
             }
@@ -252,11 +253,11 @@ class Index extends Controller
 
         $infoChan = new Channel($len);
         foreach ($userInfos as $info) {
-            \go(function () use ($infoChan, $info, $loginUserId, $fromWhere, $needMobile, $brmInfos, $comInfos, $advInfos, $innInfos) {
+            go(function () use ($infoChan, $info, $loginUserId, $fromWhere, $needMobile, $brmInfos, $comInfos, $advInfos, $innInfos) {
                 $infoUserId = $info['user_id'];
 
                 $chan = new Channel(1);
-                \go(function () use ($chan, $info, $infoUserId, $loginUserId, $fromWhere) {
+                go(function () use ($chan, $info, $infoUserId, $loginUserId, $fromWhere) {
                     if ($fromWhere != 'admin') {
                         // 是不是当前登录用户的顾问
                         $info['is_my_adviser'] = '0';

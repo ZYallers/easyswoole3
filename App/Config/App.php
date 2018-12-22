@@ -19,6 +19,6 @@ return [
     ],
     'dingtalk' => [
         'enable' => true,
-        'uri' => 'https://oapi.dingtalk.com/robot/send?access_token=56b49320c790446f95a6e3e0a760e7beebbd32ca56a8ade9372023118336472b'
+        'uri' => 'https://oapi.dingtalk.com/robot/send?access_token=9c12b1dfc3a5749ed318f83c220f8f5248cdb7c3508a18016c8134f876840ec3'
     ]
 ];
