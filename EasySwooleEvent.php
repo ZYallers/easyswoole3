@@ -105,23 +105,21 @@ class EasySwooleEvent implements Event
 
     private static function saveSlowLog(Request $request): void
     {
-        if (Config::getInstance()->getConf('app.slow_log.enable')) {
-            $nowTime = microtime(true);
-            $reqTime = $request->getAttribute('request_time');
-            $second = Config::getInstance()->getConf('app.slow_log.second');
-            if (($nowTime - $reqTime) > $second) {
-                // 计算一下运行时间
-                $runTime = round($nowTime - $reqTime, 6) . 's';
-                // 获取用户IP地址
-                $ip = $request->getAttribute('remote_ip');
-                // 拼接日志内容
-                $data = ['ip' => $ip, 'time' => date('Y-m-d H:i:s', $reqTime), 'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
-                $userAgent = $request->getHeader('user-agent');
-                if (is_array($userAgent) && count($userAgent) > 0) {
-                    $data['user_agent'] = $userAgent[0];
-                }
-                Logger::getInstance()->log(var_export($data, true), 'slow');
+        $nowTime = microtime(true);
+        $reqTime = $request->getAttribute('request_time');
+        $second = Config::getInstance()->getConf('app.slow_log.second');
+        if (($nowTime - $reqTime) > $second) {
+            // 计算一下运行时间
+            $runTime = round($nowTime - $reqTime, 6) . 's';
+            // 获取用户IP地址
+            $ip = $request->getAttribute('remote_ip');
+            // 拼接日志内容
+            $data = ['ip' => $ip, 'time' => date('Y-m-d H:i:s', $reqTime), 'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
+            $userAgent = $request->getHeader('user-agent');
+            if (is_array($userAgent) && count($userAgent) > 0) {
+                $data['user_agent'] = $userAgent[0];
             }
+            Logger::getInstance()->log(var_export($data, true), 'slow');
         }
     }
 
@@ -137,7 +135,7 @@ class EasySwooleEvent implements Event
         // 配置脚本结束回调
         Di::getInstance()->set(SysConst::SHUTDOWN_FUNCTION, [Handler::class, 'shutDownHandler']);
         // 配置http控制器异常回调
-        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'httpExceptionhandler']);
+        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, [Handler::class, 'httpExceptionHandler']);
         // 配置控制器命名空间
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_NAMESPACE, 'App\\Controller\\Http\\');
         // 配置http控制器最大解析层级，默认为5层
@@ -229,9 +227,11 @@ class EasySwooleEvent implements Event
         });
 
         // ========= 超过N秒记录到slow日志文件 =========
-        go(function () use ($request) {
-            self::saveSlowLog($request);
-        });
+        if (Config::getInstance()->getConf('app.slow_log.enable')) {
+            go(function () use ($request) {
+                self::saveSlowLog($request);
+            });
+        }
     }
 
     public static function onReceive(\swoole_server $server, int $fd, int $reactor_id, string $data): void
