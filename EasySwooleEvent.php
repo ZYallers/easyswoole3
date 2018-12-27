@@ -123,6 +123,39 @@ class EasySwooleEvent implements Event
         }
     }
 
+    private static function registerPool(): void
+    {
+        $Pool = PoolManager::getInstance();
+        // enjoythin
+        $poolConf = Config::getInstance()->getConf('mysql.enjoythin.pool');
+        $Pool->register(Enjoythin::class, $poolConf['maxnum'])
+            ->setMaxIdleTime($poolConf['idletime'])
+            ->setMinObjectNum($poolConf['minnum'])
+            ->setGetObjectTimeout($poolConf['timeout'])
+            ->setIntervalCheckTime($poolConf['checktime']);
+        // cache
+        $poolConf = Config::getInstance()->getConf('redis.cache.pool');
+        $Pool->register(Cache::class, $poolConf['maxnum'])
+            ->setMaxIdleTime($poolConf['idletime'])
+            ->setMinObjectNum($poolConf['minnum'])
+            ->setGetObjectTimeout($poolConf['timeout'])
+            ->setIntervalCheckTime($poolConf['checktime']);
+        // session
+        $poolConf = Config::getInstance()->getConf('redis.session.pool');
+        $Pool->register(Session::class, $poolConf['maxnum'])
+            ->setMaxIdleTime($poolConf['idletime'])
+            ->setMinObjectNum($poolConf['minnum'])
+            ->setGetObjectTimeout($poolConf['timeout'])
+            ->setIntervalCheckTime($poolConf['checktime']);
+    }
+
+    private static function preLoadPool()
+    {
+        $Pool = PoolManager::getInstance();
+        $Pool->getPool(Cache::class)->preLoad(Config::getInstance()->getConf('redis.cache.pool.minnum'));
+        $Pool->getPool(Session::class)->preLoad(Config::getInstance()->getConf('redis.session.pool.minnum'));
+    }
+
     public static function initialize()
     {
         // TODO: Implement initialize() method.
@@ -144,10 +177,8 @@ class EasySwooleEvent implements Event
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15);
         // 注入日志处理类
         Logger::getInstance()->setLoggerWriter(new \App\Utility\Logger());
-        // 注入连接池
-        PoolManager::getInstance()->register(Enjoythin::class, Config::getInstance()->getConf('mysql.enjoythin.POOL_MAX_NUM'));
-        PoolManager::getInstance()->register(Cache::class, Config::getInstance()->getConf('redis.cache.POOL_MAX_NUM'));
-        PoolManager::getInstance()->register(Session::class, Config::getInstance()->getConf('redis.session.POOL_MAX_NUM'));
+        // 注册连接池
+        self::registerPool();
     }
 
     public static function mainServerCreate(EventRegister $register)
@@ -179,12 +210,12 @@ class EasySwooleEvent implements Event
             Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
             ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
-            $register->add($register::onConnect, function (\swoole_server $server, int $fd) {
-                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' connect ---------------' . PHP_EOL;
+            $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
+                echo '-------- ' . date('Y/m/d H:i:s') . ": Server {$workerId} connect --------\n";
             });
 
-            $register->add($register::onClose, function (\swoole_server $server, int $fd) {
-                echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' close ---------------' . PHP_EOL;
+            $register->add($register::onClose, function (\swoole_server $server, int $workerId) {
+                echo '-------- ' . date('Y/m/d H:i:s') . ": Server {$workerId} close --------\n";
             });
         } else {
             // 生产模式下丢弃swoole错误日志
@@ -192,11 +223,19 @@ class EasySwooleEvent implements Event
             ServerManager::getInstance()->getSwooleServer()->set(['log_file' => '/dev/null']);
         }
 
-        $register->add($register::onWorkerStart, function (\swoole_server $server, int $fd) {
+        $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
             // 此数组中的文件表示进程启动前就加载了，所以无法reload
             //var_dump(get_included_files());
             self::loadAppConfigFile(['app', 'param', 'router']);
-            echo '--------------- ' . date('Y/m/d H:i:s') . ': Server ' . $fd . ' start ---------------' . PHP_EOL;
+            // 预创建连接池对象，避免在启动时突然大量请求,造成连接来不及创建从而失败的问题
+            if ($server->taskworker == false) {
+                self::preLoadPool();
+            }
+
+            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
+                $workerFlag = $server->taskworker ? 'TaskWorker' : 'Worker';
+                echo '-------- ' . date('Y/m/d H:i:s') . ": {$workerFlag} {$workerId} start --------\n";
+            }
         });
     }
 

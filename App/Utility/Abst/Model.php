@@ -23,10 +23,8 @@ abstract class Model
     protected function __construct(string $className)
     {
         $this->className = $className;
-        $key = strtolower(basename(str_replace('\\', '/', $this->className)));
-        $timeout = Config::getInstance()->getConf('mysql.' . $key . '.POOL_TIME_OUT');
         for ($i = 0; $i < $this->tryTimes; $i++) {
-            $db = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
+            $db = PoolManager::getInstance()->getPool($this->className)->getObj();
             if ($db instanceof MysqlObject) {
                 $this->db = $db;
                 break;

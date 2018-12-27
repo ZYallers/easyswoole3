@@ -21,10 +21,8 @@ abstract class Cache
     public function __construct(string $className)
     {
         $this->className = $className;
-        $key = strtolower(basename(str_replace('\\', '/', $this->className)));
-        $timeout = Config::getInstance()->getConf('redis.' . $key . '.POOL_TIME_OUT');
         for ($i = 0; $i < $this->tryTimes; $i++) {
-            $cache = PoolManager::getInstance()->getPool($this->className)->getObj($timeout);
+            $cache = PoolManager::getInstance()->getPool($this->className)->getObj();
             if ($cache instanceof RedisObject) {
                 $this->cache = $cache;
                 break;

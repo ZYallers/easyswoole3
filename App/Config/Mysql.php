@@ -1,9 +1,6 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: zhongyongbiao
- * Date: 2018/10/26
- * Time: 下午3:25
+ * Mysql 配置文件
  */
 
 return [
@@ -15,7 +12,12 @@ return [
         'charset' => 'utf8',
         'password' => '',
         'database' => '',
-        'POOL_MAX_NUM' => 8,
-        'POOL_TIME_OUT' => 0.1,
+        'pool' => [
+            'maxnum' => 8, // 最大连接数
+            'minnum' => 1, // 最小连接数
+            'timeout' => 0.1, // 获取对象超时时间，单位秒
+            'idletime' => 30, // 连接池对象存活时间，单位秒
+            'checktime' => 60000, // 多久执行一次回收检测，单位毫秒
+        ],
     ]
 ];
