@@ -8,12 +8,11 @@
 
 namespace App\Process;
 
-use EasySwoole\EasySwoole\Swoole\Process\AbstractProcess;
-use Swoole\Process;
+use EasySwoole\Component\Process\AbstractProcess;
 
 class ProcessTest extends AbstractProcess
 {
-    public function run(Process $process)
+    public function run($arg)
     {
         // TODO: Implement run() method.
         echo "process is run.\n";

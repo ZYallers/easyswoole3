@@ -9,8 +9,8 @@
 namespace EasySwoole\EasySwoole;
 
 use App\Crontab\ThrowtablePushMsgTask;
-use App\Utility\AppConst;
 use App\Throwable\Handler;
+use App\Utility\AppConst;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
 use App\Utility\Pool\Redis\Cache;
@@ -183,7 +183,6 @@ class EasySwooleEvent implements Event
 
     public static function mainServerCreate(EventRegister $register)
     {
-
         // TODO: Implement mainServerCreate() method.
         // 天天都在问的服务热重启 单独启动一个进程处理
         /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
@@ -250,7 +249,6 @@ class EasySwooleEvent implements Event
             $ip = ServerManager::getInstance()->getSwooleServer()->connection_info($request->getSwooleRequest()->fd);
             $request->withAttribute('remote_ip', isset($ip['remote_ip']) ? $ip['remote_ip'] : 'Unknown');
         }
-
         return true;
     }
 
@@ -258,13 +256,12 @@ class EasySwooleEvent implements Event
     {
         // TODO: Implement afterAction() method.
         // ========= Session更新处理 =========
-        go(function () use ($request) {
-            $sid = $request->getRequestParam('sess_token');
-            if (!empty($sid)) {
+        $sid = $request->getRequestParam('sess_token');
+        if (!empty($sid)) {
+            go(function () use ($sid) {
                 (new \App\Cache\Session())->refreshExpireTime($sid);
-            }
-        });
-
+            });
+        }
         // ========= 超过N秒记录到slow日志文件 =========
         if (Config::getInstance()->getConf('app.slow_log.enable')) {
             go(function () use ($request) {

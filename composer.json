@@ -6,7 +6,7 @@
   },
   "require": {
     "easyswoole/easyswoole": "3.x-dev",
-    "easyswoole/swoole-ide-helper": "^1.03",
+    "easyswoole/swoole-ide-helper": "^1.2",
     "easyswoole/mysqli": "^1.1"
   },
   "repositories": {

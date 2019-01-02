@@ -10,12 +10,11 @@ namespace App\Process;
 
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\ServerManager;
-use EasySwoole\EasySwoole\Swoole\Process\AbstractProcess;
-use Swoole\Process;
+use EasySwoole\Component\Process\AbstractProcess;
 
 class Inotify extends AbstractProcess
 {
-    public function run(Process $process)
+    public function run($arg)
     {
         // TODO: Implement run() method.
         if (extension_loaded('inotify')) {
