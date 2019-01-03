@@ -48,7 +48,7 @@ EasySwoole 是一款基于Swoole Server 开发的常驻内存型的分布式PHP�
 4. 安装`composer`；
 5. 克隆下来该项目;
 6. 进入项目根目录下执行`composer Install`，来拉取需要的依赖库；
-7. 配置日志文件目录`log`和临时文件目录`temp`；
+7. 配置日志文件目录`Log`和临时文件目录`Temp`；
 8. 执行`php easyswoole start`，开始你的探索之旅！
 
 过程中有什么不懂，请自行百度脑补一波，还是不懂再联系！

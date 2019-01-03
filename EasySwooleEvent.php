@@ -181,51 +181,51 @@ class EasySwooleEvent implements Event
         self::registerPool();
     }
 
+    private static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null)
+    {
+        if (is_null($utimestamp)) {
+            $utimestamp = microtime(true);
+        }
+        $timestamp = floor($utimestamp);
+        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
+        return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
+    }
+
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
-        // 天天都在问的服务热重启 单独启动一个进程处理
-        /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
-            ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
-        }*/
-
-        // 注册暴力热启动进程
-        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload', ['disableInotify' => false]))->getProcess());
-
         // 注册自定义进程
         //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\ProcessTest('test_process'))->getProcess());
 
         // 注册异常消息推送定时任务
         Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
 
-        // 主swoole服务修改配置
+        // 配置swoole日志文件名
+        $logDir = Config::getInstance()->getConf('LOG_DIR');
+        $logFile = $logDir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
+        Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
+        ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
+
         if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
-            // 开发模式设置swoole错误日志文件
-            $dir = Config::getInstance()->getConf('LOG_DIR') . '/' . date('Ymd');
-            if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
-            }
-            $logFile = $dir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
-            Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
-            ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
+            // 天天都在问的服务热重启 单独启动一个进程处理
+            //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
+
+            // 注册暴力热启动进程
+            //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload', ['disableInotify' => false]))->getProcess());
 
             $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
-                echo '-------- ' . date('Y/m/d H:i:s') . ": Server {$workerId} connect --------\n";
+                echo "[" . self::udate() . "] NOTICE Server {$workerId} connect.\n";
             });
 
             $register->add($register::onClose, function (\swoole_server $server, int $workerId) {
-                echo '-------- ' . date('Y/m/d H:i:s') . ": Server {$workerId} close --------\n";
+                echo "[" . self::udate() . "] NOTICE Server {$workerId} close.\n";
             });
-        } else {
-            // 生产模式下丢弃swoole错误日志
-            Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', '/dev/null');
-            ServerManager::getInstance()->getSwooleServer()->set(['log_file' => '/dev/null']);
         }
 
         $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
-            // 此数组中的文件表示进程启动前就加载了，所以无法reload
-            //var_dump(get_included_files());
+            // get_included_files()数组中的文件表示进程启动前就加载了，所以无法reload
             self::loadAppConfigFile(['app', 'param', 'router']);
+
             // 预创建连接池对象，避免在启动时突然大量请求,造成连接来不及创建从而失败的问题
             if ($server->taskworker == false) {
                 self::preLoadPool();
@@ -233,7 +233,7 @@ class EasySwooleEvent implements Event
 
             if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
                 $workerFlag = $server->taskworker ? 'TaskWorker' : 'Worker';
-                echo '-------- ' . date('Y/m/d H:i:s') . ": {$workerFlag} {$workerId} start --------\n";
+                echo "[" . self::udate() . "] NOTICE {$workerFlag} {$workerId} start.\n";
             }
         });
     }
@@ -243,7 +243,6 @@ class EasySwooleEvent implements Event
         // TODO: Implement onRequest() method.
         // ============ 接口版本校验 ============
         self::parseUriPath($request, $response);
-
         if (!$response->isEndResponse()) {
             $request->withAttribute('request_time', microtime(true));
             $ip = ServerManager::getInstance()->getSwooleServer()->connection_info($request->getSwooleRequest()->fd);

@@ -12,7 +12,7 @@ return [
             'max_request' => 5000, //worker完成该数量的请求后将退出，防止内存溢出
             'task_worker_num' => 8, //运行的task_worker进程数量
             'task_max_request' => 1000, //执行该数量次数后重启task进程
-            'log_level' => 3, //设置Server错误日志打印的等级，https://wiki.swoole.com/wiki/page/538.html
+            'log_level' => SWOOLE_LOG_NOTICE, //设置Server错误日志打印的等级，https://wiki.swoole.com/wiki/page/538.html
             'enable_coroutine' => true, //底层自动在onRequest回调中创建协程，开发者无需自行使用go函数创建协程，https://wiki.swoole.com/wiki/page/949.html
             'max_coroutine' => 3000, //默认值为3000，设置当前工作进程最大协程数量。https://wiki.swoole.com/wiki/page/950.html
             'task_async' => true, //设置为true, task进程会变为异步模式, 允许使用异步/协程API. https://wiki.swoole.com/wiki/page/1014.html

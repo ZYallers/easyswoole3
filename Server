@@ -1,0 +1,46 @@
+#!/bin/bash
+
+startFun(){
+    if [ ! -n "$1" ] ;then
+        echo "Error: you have not choice log dir!"
+        exit
+    fi
+    cur_date=`date +%Y%m%d`
+    base_dir=$1/$cur_date
+    if [ ! -d "$base_dir" ]; then
+        mkdir "$base_dir"
+    fi
+    parent_dir_name=`pwd | awk -F "/" '{print $NF}'`
+    log_file=$base_dir/$parent_dir_name.fswatch_reload.log
+    nohup ./fswatch.sh ./App > $log_file 2>&1 &
+    echo "Info: EasySwoole and Fswatch startd."
+}
+
+stopFun(){
+    echo "--------------------------------------------------------------------------------------"
+    ps axuw | head -1;ps axuw|grep 'fswatch.sh'|grep -v grep
+    echo "--------------------------------------------------------------------------------------"
+    if [ "$(ps -ef|grep 'fswatch.sh'|grep -v grep|awk '{print $2}')" != "" ] ;then
+        kill -9 $(ps -ef|grep 'fswatch.sh'|grep -v grep|awk '{print $2}')
+        echo "Info: Fswatch have killed."
+    fi
+    php easyswoole stop
+    echo "Info: EasySwoole stoped."
+}
+
+case $1 in
+        start)
+            startFun $2
+        ;;
+        stop)
+            stopFun
+        ;;
+        restart)
+            stopFun
+            startFun $2
+        ;;
+        *)
+            echo "Error: require arguments!"
+        ;;
+esac
+exit
