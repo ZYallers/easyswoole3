@@ -26,6 +26,21 @@ use EasySwoole\Utility\File;
 
 class EasySwooleEvent implements Event
 {
+    private static function isDev()
+    {
+        return Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV;
+    }
+
+    private static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null)
+    {
+        if (is_null($utimestamp)) {
+            $utimestamp = microtime(true);
+        }
+        $timestamp = floor($utimestamp);
+        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
+        return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
+    }
+
     private static function loadAppConfigFile(?array $include = null): void
     {
         if (isset($include)) {
@@ -181,21 +196,9 @@ class EasySwooleEvent implements Event
         self::registerPool();
     }
 
-    private static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null)
-    {
-        if (is_null($utimestamp)) {
-            $utimestamp = microtime(true);
-        }
-        $timestamp = floor($utimestamp);
-        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
-        return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
-    }
-
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
-        // 注册自定义进程
-        //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\ProcessTest('test_process'))->getProcess());
 
         // 注册异常消息推送定时任务
         Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
@@ -206,34 +209,31 @@ class EasySwooleEvent implements Event
         Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
         ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
-        if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
-            // 天天都在问的服务热重启 单独启动一个进程处理
-            //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\Inotify('inotify_process'))->getProcess());
-
+        if (self::isDev()) {
             // 注册暴力热启动进程
-            //ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload', ['disableInotify' => false]))->getProcess());
+            ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload'))->getProcess());
 
             $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
-                echo "[" . self::udate() . "] NOTICE Server {$workerId} connect.\n";
+                echo "[" . self::udate() . "]  NOTICE  Server {$workerId} connect.\n";
             });
 
             $register->add($register::onClose, function (\swoole_server $server, int $workerId) {
-                echo "[" . self::udate() . "] NOTICE Server {$workerId} close.\n";
+                echo "[" . self::udate() . "]  NOTICE  Server {$workerId} close.\n";
             });
         }
 
         $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
+            if (self::isDev()) {
+                $workerFlag = $server->taskworker ? 'TaskWorker' : 'Worker';
+                echo "[" . self::udate() . "]  NOTICE  {$workerFlag} {$workerId} start.\n";
+            }
+
             // get_included_files()数组中的文件表示进程启动前就加载了，所以无法reload
             self::loadAppConfigFile(['app', 'param', 'router']);
 
             // 预创建连接池对象，避免在启动时突然大量请求,造成连接来不及创建从而失败的问题
             if ($server->taskworker == false) {
                 self::preLoadPool();
-            }
-
-            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
-                $workerFlag = $server->taskworker ? 'TaskWorker' : 'Worker';
-                echo "[" . self::udate() . "] NOTICE {$workerFlag} {$workerId} start.\n";
             }
         });
     }

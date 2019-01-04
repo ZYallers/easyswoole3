@@ -24,18 +24,31 @@ class HotReload extends AbstractProcess
      * @var \swoole_table $table
      */
     protected $table;
+
     /**
      * @var bool $isReady
      */
     protected $isReady = false;
+
     /**
      * @var string $monitorDir 需要监控的目录
      */
     protected $monitorDir;
+
     /**
      * @var array $monitorExt 需要监控的文件后缀
      */
     protected $monitorExt;
+
+    private function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null)
+    {
+        if (is_null($utimestamp)) {
+            $utimestamp = microtime(true);
+        }
+        $timestamp = floor($utimestamp);
+        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
+        return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
+    }
 
     /**
      * 注册Inotify监听事件
@@ -86,6 +99,7 @@ class HotReload extends AbstractProcess
         $dirIterator = new \RecursiveDirectoryIterator($this->monitorDir);
         $iterator = new \RecursiveIteratorIterator($dirIterator);
         $inodeList = [];
+        $modifyInodeList = [];
 
         /* @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -94,17 +108,20 @@ class HotReload extends AbstractProcess
                 // 由于修改文件名称，并不需要重新载入，可用基于inode进行监视
                 $inode = $file->getInode();
                 $mtime = $file->getMTime();
+                $path = $file->getPath() . '/' . $file->getFilename();
                 array_push($inodeList, $inode);
                 if ($this->table->exist($inode)) {
                     // 修改文件，但未发生inode变更
                     $oldTime = $this->table->get($inode)['mtime'];
                     if ($oldTime != $mtime) {
-                        $this->table->set($inode, ['mtime' => $mtime]);
+                        $this->table->set($inode, ['mtime' => $mtime, 'file' => $path]);
+                        $modifyInodeList[] = 'update|' . $inode . '|' . $path;
                         $doReload = true;
                     }
                 } else {
                     // 新建文件或修改文件，变更了inode
-                    $this->table->set($inode, ['mtime' => $mtime]);
+                    $this->table->set($inode, ['mtime' => $mtime, 'file' => $path]);
+                    $modifyInodeList[] = 'add|' . $inode . '|' . $path;
                     $doReload = true;
                 }
             }
@@ -112,23 +129,25 @@ class HotReload extends AbstractProcess
 
         foreach ($this->table as $inode => $value) {
             // 迭代table寻找需要删除的inode
-            if (!in_array(intval($inode), $inodeList)) {
+            if (!in_array($inode, $inodeList)) {
                 $this->table->del($inode);
+                $modifyInodeList[] = 'delete|' . $inode . '|' . $value['file'];
                 $doReload = true;
             }
         }
 
         if ($doReload) {
             $count = $this->table->count();
-            $time = date('Y-m-d H:i:s');
             $usage = round(microtime(true) - $startTime, 3);
             if (!$this->isReady == false) {
                 // 监视到需要进行热重启
-                echo "Server hot reload at {$time} use: {$usage} s, total: {$count} files." . PHP_EOL;
+                echo "[" . $this->udate() . "]  NOTICE  Server hotReload: use {$usage} s, total: {$count} files, change: "
+                    . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
                 ServerManager::getInstance()->getSwooleServer()->reload();
             } else {
                 // 首次扫描不需要进行重启操作
-                echo "Server hot reload  ready at {$time} use: {$usage} s, total: {$count} files." . PHP_EOL;
+                echo "[" . $this->udate() . "]  NOTICE  Server hotReload: ready use {$usage} s, total: {$count} files, change: "
+                    . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
                 $this->isReady = true;
             }
         }
@@ -140,10 +159,15 @@ class HotReload extends AbstractProcess
     public function run($arg)
     {
         // TODO: Implement run() method.
+        $rate = $this->getArg('rate');
         $disableInotify = $this->getArg('disableInotify');
         $monitorDir = $this->getArg('monitorDir');
         $monitorExt = $this->getArg('monitorExt');
 
+        // 指定多久执行检测一次文件变动
+        $rate = $rate ? intval($rate) : 5;
+        // 指定是否禁用inotify扩展
+        $disableInotify = $disableInotify ? boolval($disableInotify) : true;
         // 指定需要监视的目录，建议只监视App目录下的文件变更
         $this->monitorDir = $monitorDir ? $monitorDir : EASYSWOOLE_ROOT . '/App';
         // 指定需要监视的文件后缀，不属于指定后缀类型的文件无视变更不重启
@@ -152,18 +176,18 @@ class HotReload extends AbstractProcess
         if (extension_loaded('inotify') && !$disableInotify) {
             // 扩展可用，优先使用扩展进行处理
             $this->registerInotifyEvent();
-            echo 'Server hot reload start: use inotify.' . PHP_EOL;
+            echo "[" . $this->udate() . "]  NOTICE  Server hotReload start: use inotify.\n";
         } else {
             $this->table = new Table(512);
             $this->table->column('mtime', Table::TYPE_INT, 4);
+            $this->table->column('file', Table::TYPE_STRING, 100);
             $this->table->create();
             $this->runComparison();
-            \Swoole\Timer::tick(5000, function () {
+            \Swoole\Timer::tick($rate, function () {
                 $this->runComparison();
             });
-            echo 'Server hot reload start: use timer tick comparison.' . PHP_EOL;
+            echo "[" . $this->udate() . "]  NOTICE  Server hotReload start: use timer tick comparison.\n";
         }
-
     }
 
     public function onReceive(string $str)

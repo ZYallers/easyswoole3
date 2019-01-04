@@ -1,31 +1,61 @@
 #!/bin/bash
 
+echoFun(){
+    str=$1
+    color=$2
+    case $color in
+        ok)
+            echo -e "\033[32m $str \033[0m"
+        ;;
+        err)
+            echo -e "\033[31m $str \033[0m"
+        ;;
+        tip)
+            echo -e "\033[34m $str \033[0m"
+        ;;
+        *)
+            echo "$str"
+        ;;
+esac
+}
+
+psFun(){
+    echoFun "-------------------------------------process------------------------------------------" tip
+    ps axuw|head -1;ps axuw|grep -E 'fswatch|es.account.hxsapp.com'|grep -v grep
+    echoFun "-------------------------------------process------------------------------------------" tip
+}
+
 startFun(){
     if [ ! -n "$1" ] ;then
-        echo "Error: you have not choice log dir!"
+        echoFun "Error: you have not choice log dir!" err
         exit
     fi
+
     cur_date=`date +%Y%m%d`
     base_dir=$1/$cur_date
     if [ ! -d "$base_dir" ]; then
         mkdir "$base_dir"
     fi
+
     parent_dir_name=`pwd | awk -F "/" '{print $NF}'`
     log_file=$base_dir/$parent_dir_name.fswatch_reload.log
     nohup ./fswatch.sh ./App > $log_file 2>&1 &
-    echo "Info: EasySwoole and Fswatch startd."
+
+    psFun
+
+    echoFun "Info: Server started!" ok
 }
 
 stopFun(){
-    echo "--------------------------------------------------------------------------------------"
-    ps axuw | head -1;ps axuw|grep 'fswatch.sh'|grep -v grep
-    echo "--------------------------------------------------------------------------------------"
-    if [ "$(ps -ef|grep 'fswatch.sh'|grep -v grep|awk '{print $2}')" != "" ] ;then
-        kill -9 $(ps -ef|grep 'fswatch.sh'|grep -v grep|awk '{print $2}')
-        echo "Info: Fswatch have killed."
+    psFun
+
+    if [ "$(ps -ef|grep 'fswatch'|grep -v grep|awk '{print $2}')" != "" ] ;then
+        kill -9 $(ps -ef|grep 'fswatch'|grep -v grep|awk '{print $2}')
+        echoFun "Info: fswatch killed." ok
     fi
+
     php easyswoole stop
-    echo "Info: EasySwoole stoped."
+    echoFun "Info: php stoped." ok
 }
 
 case $1 in
@@ -40,7 +70,7 @@ case $1 in
             startFun $2
         ;;
         *)
-            echo "Error: require arguments!"
+            echoFun "Error: require arguments!" err
         ;;
 esac
 exit
