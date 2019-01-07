@@ -268,10 +268,4 @@ class EasySwooleEvent implements Event
             });
         }
     }
-
-    public static function onReceive(\swoole_server $server, int $fd, int $reactor_id, string $data): void
-    {
-
-    }
-
 }
