@@ -139,7 +139,7 @@ class HotReload extends AbstractProcess
         if ($doReload) {
             $count = $this->table->count();
             $usage = round(microtime(true) - $startTime, 3);
-            if (!$this->isReady == false) {
+            if ($this->isReady) {
                 // 监视到需要进行热重启
                 echo "[" . $this->udate() . "]  NOTICE  Server hotReload: use {$usage} s, total: {$count} files, change: "
                     . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
@@ -147,7 +147,7 @@ class HotReload extends AbstractProcess
             } else {
                 // 首次扫描不需要进行重启操作
                 echo "[" . $this->udate() . "]  NOTICE  Server hotReload: ready use {$usage} s, total: {$count} files, change: "
-                    . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
+                    . count($modifyInodeList) . " files.\n";
                 $this->isReady = true;
             }
         }

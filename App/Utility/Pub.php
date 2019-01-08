@@ -8,17 +8,130 @@
 
 namespace App\Utility;
 
-
+use EasySwoole\EasySwoole\Logger;
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\ServerManager;
+use EasySwoole\Http\Request;
 
 class Pub
 {
+    static function isDev(): bool
+    {
+        return Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV;
+    }
+
+    static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null): ?string
+    {
+        if (is_null($utimestamp)) {
+            $utimestamp = microtime(true);
+        }
+        $timestamp = floor($utimestamp);
+        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
+        $res = date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
+        return $res ? $res : null;
+    }
+
+    static function clientIp(Request $request, $headerName = 'x-real-ip')
+    {
+        $server = ServerManager::getInstance()->getSwooleServer();
+        $client = $server->getClientInfo($request->getSwooleRequest()->fd);
+        $clientAddress = $client['remote_ip'];
+        $xri = $request->getHeader($headerName);
+        $xff = $request->getHeader('x-forwarded-for');
+        if ($clientAddress === '127.0.0.1') {
+            if (!empty($xri)) {  // 如果有xri 则判定为前端有NGINX等代理
+                $clientAddress = $xri[0];
+            } elseif (!empty($xff)) {  // 如果不存在xri 则继续判断xff
+                $list = explode(',', $xff[0]);
+                if (isset($list[0])) {
+                    $clientAddress = $list[0];
+                }
+            }
+        }
+        return $clientAddress;
+    }
+
+    static function parseUriPath(Request $request): ?string
+    {
+        $msg = null;
+        $path = substr($request->getUri()->getPath(), 1);
+        $routers = Config::getInstance()->getConf('router');
+        if (isset($routers[$path])) {
+            $router = $routers[$path];
+            if (in_array(strtolower($request->getMethod()), explode(',', $router['method']))) {
+                $version = $request->getRequestParam('version');
+                // 如果没传，默认获取当前最新版本
+                if (empty($version)) {
+                    $version = Config::getInstance()->getConf('app.version');
+                }
+
+                $flag = false;
+                // 先获取router支持的版本，然后遍历
+                foreach (explode('|', $router['version']) as $item) {
+                    // 判断是否包含'+'支持以上版本
+                    if (strpos($item, '+') !== false) {
+                        // 判断 $version 是否大于等于要求的 $vs 版本
+                        $vs = substr($item, 0, -1);
+                        if (version_compare($version, $vs, '>=')) {
+                            $version = $vs;
+                            $flag = true;
+                            break;
+                        }
+                    } else {
+                        // 判断 $version 是否等于要求的 $vs 版本
+                        if ($version == $item) {
+                            $flag = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($flag) {
+                    $module = join('', explode('.', $version));
+                    // 配置了forward的用forward的，否则延用Path
+                    if (isset($router['forward']) && !empty($router['forward'])) {
+                        $path = $router['forward'];
+                    }
+                    $forward = "/v{$module}/{$path}";
+                    $request->getUri()->withPath($forward);
+                } else {
+                    $msg = 'Version does not exist';
+                }
+            } else {
+                $msg = 'Method not allowed';
+            }
+        } else {
+            $msg = 'Uri not found';
+        }
+        return $msg;
+    }
+
+    static function saveSlowLog(Request $request): void
+    {
+        $nowTime = microtime(true);
+        $reqTime = $request->getAttribute('request_time');
+        $second = Config::getInstance()->getConf('app.slow_log.second');
+        if (($nowTime - $reqTime) > $second) {
+            // 计算一下运行时间
+            $runTime = round($nowTime - $reqTime, 6) . 's';
+            // 获取用户IP地址
+            $ip = $request->getAttribute('remote_ip');
+            // 拼接日志内容
+            $data = ['ip' => $ip, 'time' => date('Y.m.d H:i:s', $reqTime), 'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
+            $userAgent = $request->getHeader('user-agent');
+            if (is_array($userAgent) && count($userAgent) > 0) {
+                $data['user_agent'] = $userAgent[0];
+            }
+            Logger::getInstance()->log(var_export($data, true), 'slow');
+        }
+    }
+
     static function pushDingtalkMsg(string $msg, string $type = 'debug', int $time = null, string $file = null
         , int $line = null, string $ip = null, string $uri = null, string $userAgent = null): void
     {
-        $Conf = Config::getInstance();
-        $env = $Conf->getConf('RUN_MODE');
-        $appName = $Conf->getConf('app.name');
+        $cf = Config::getInstance();
+        $env = $cf->getConf('RUN_MODE');
+        $appName = $cf->getConf('app.name');
         $title = "[{$appName}/{$env}: {$type}] {$msg}";
         $text = ["### {$msg}", '> `App:` ' . $appName, '`Env:` ' . $env, '`Type:` ' . $type,
             '`Time:` ' . date('Y.n.j H:i:s', isset($time) ? $time : time())];
@@ -38,7 +151,7 @@ class Pub
             $text[] = '`UserAgent:` ' . $userAgent;
         }
         $body = ['msgtype' => 'markdown', 'markdown' => ['title' => $title, 'text' => join('  ' . PHP_EOL, $text)]];
-        Curl::getInstance()->request('post', $Conf->getConf('app.dingtalk.uri'), ['body' => json_encode($body)]);
+        Curl::getInstance()->request('post', $cf->getConf('app.dingtalk.uri'), ['body' => json_encode($body)]);
     }
 
     /**

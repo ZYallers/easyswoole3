@@ -10,11 +10,11 @@ namespace EasySwoole\EasySwoole;
 
 use App\Crontab\ThrowtablePushMsgTask;
 use App\Throwable\Handler;
-use App\Utility\AppConst;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
 use App\Utility\Pool\Redis\Cache;
 use App\Utility\Pool\Redis\Session;
+use App\Utility\Pub;
 use EasySwoole\Component\Di;
 use EasySwoole\Component\Pool\PoolManager;
 use EasySwoole\EasySwoole\Crontab\Crontab;
@@ -26,136 +26,34 @@ use EasySwoole\Utility\File;
 
 class EasySwooleEvent implements Event
 {
-    private static function isDev()
+    private static function loadAppConfigFile(): void
     {
-        return Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV;
-    }
-
-    private static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null)
-    {
-        if (is_null($utimestamp)) {
-            $utimestamp = microtime(true);
-        }
-        $timestamp = floor($utimestamp);
-        $milliseconds = round(($utimestamp - $timestamp) * 1000000);
-        return date(preg_replace('`(?<!\\\\)u`', $milliseconds, $format), $timestamp);
-    }
-
-    private static function loadAppConfigFile(?array $include = null): void
-    {
-        if (isset($include)) {
-            $files = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
-            if (is_array($files)) {
-                foreach ($files['files'] as $file) {
-                    $basename = strtolower(basename($file, '.php'));
-                    if (in_array($basename, $include)) {
-                        Config::getInstance()->loadFile($file);
-                    }
-                }
+        $scan = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
+        if (is_array($scan) && isset($scan['files'])) {
+            foreach ($scan['files'] as $file) {
+                Config::getInstance()->loadFile($file);
             }
-        }
-    }
-
-    private static function parseUriPath(Request $request, Response $response): void
-    {
-        $msg = null;
-        $path = substr($request->getUri()->getPath(), 1);
-        $routers = Config::getInstance()->getConf('router');
-        if (isset($routers[$path])) {
-            $router = $routers[$path];
-            if (in_array(strtolower($request->getMethod()), explode(',', $router['method']))) {
-                $version = $request->getRequestParam('version');
-                // 如果没传，默认获取当前最新版本
-                if (empty($version)) {
-                    $version = Config::getInstance()->getConf('app.version');
-                }
-
-                $flag = false;
-                // 先获取router支持的版本，然后遍历
-                foreach (explode('|', $router['version']) as $item) {
-                    // 判断是否包含'+'支持以上版本
-                    if (strpos($item, '+') !== false) {
-                        // 判断 $version 是否大于等于要求的 $vs 版本
-                        $vs = substr($item, 0, -1);
-                        if (version_compare($version, $vs, '>=')) {
-                            $version = $vs;
-                            $flag = true;
-                            break;
-                        }
-                    } else {
-                        // 判断 $version 是否等于要求的 $vs 版本
-                        if ($version == $item) {
-                            $flag = true;
-                            break;
-                        }
-                    }
-                }
-
-                if ($flag) {
-                    $module = join('', explode('.', $version));
-                    // 配置了forward的用forward的，否则延用Path
-                    if (isset($router['forward']) && !empty($router['forward'])) {
-                        $path = $router['forward'];
-                    }
-                    $forward = "/v{$module}/{$path}";
-                    $request->getUri()->withPath($forward);
-                } else {
-                    $msg = 'Version does not exist';
-                }
-            } else {
-                $msg = 'Method not allowed';
-            }
-        } else {
-            $msg = 'Uri not found';
-        }
-
-        if (!is_null($msg)) {
-            $data = ['code' => Code::NOT_FOUND, 'data' => null, 'msg' => $msg];
-            $response->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            $response->withHeader('Content-type', 'application/json;charset=utf-8');
-            $response->withStatus(Code::NOT_FOUND);
-            $response->end();
-        }
-    }
-
-    private static function saveSlowLog(Request $request): void
-    {
-        $nowTime = microtime(true);
-        $reqTime = $request->getAttribute('request_time');
-        $second = Config::getInstance()->getConf('app.slow_log.second');
-        if (($nowTime - $reqTime) > $second) {
-            // 计算一下运行时间
-            $runTime = round($nowTime - $reqTime, 6) . 's';
-            // 获取用户IP地址
-            $ip = $request->getAttribute('remote_ip');
-            // 拼接日志内容
-            $data = ['ip' => $ip, 'time' => date('Y-m-d H:i:s', $reqTime), 'runtime' => $runTime, 'uri' => $request->getUri()->__toString()];
-            $userAgent = $request->getHeader('user-agent');
-            if (is_array($userAgent) && count($userAgent) > 0) {
-                $data['user_agent'] = $userAgent[0];
-            }
-            Logger::getInstance()->log(var_export($data, true), 'slow');
         }
     }
 
     private static function registerPool(): void
     {
         $Pool = PoolManager::getInstance();
-        // enjoythin
+        // mysql.enjoythin
         $poolConf = Config::getInstance()->getConf('mysql.enjoythin.pool');
         $Pool->register(Enjoythin::class, $poolConf['maxnum'])
             ->setMaxIdleTime($poolConf['idletime'])
             ->setMinObjectNum($poolConf['minnum'])
             ->setGetObjectTimeout($poolConf['timeout'])
             ->setIntervalCheckTime($poolConf['checktime']);
-        // cache
+        // redis.cache
         $poolConf = Config::getInstance()->getConf('redis.cache.pool');
         $Pool->register(Cache::class, $poolConf['maxnum'])
             ->setMaxIdleTime($poolConf['idletime'])
             ->setMinObjectNum($poolConf['minnum'])
             ->setGetObjectTimeout($poolConf['timeout'])
             ->setIntervalCheckTime($poolConf['checktime']);
-        // session
+        // redis.session
         $poolConf = Config::getInstance()->getConf('redis.session.pool');
         $Pool->register(Session::class, $poolConf['maxnum'])
             ->setMaxIdleTime($poolConf['idletime'])
@@ -177,7 +75,7 @@ class EasySwooleEvent implements Event
         // 设置时区
         date_default_timezone_set('Asia/Shanghai');
         // 载入Config文件夹中的配置文件
-        self::loadAppConfigFile(['oss', 'mysql', 'redis']);
+        self::loadAppConfigFile();
         // 配置错误处理回调
         Di::getInstance()->set(SysConst::ERROR_HANDLER, [Handler::class, 'errorHandler']);
         // 配置脚本结束回调
@@ -199,7 +97,6 @@ class EasySwooleEvent implements Event
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
-
         // 注册异常消息推送定时任务
         Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
 
@@ -209,27 +106,24 @@ class EasySwooleEvent implements Event
         Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
         ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
-        if (self::isDev()) {
-            // 注册暴力热启动进程
+        if (Pub::isDev()) {
+            // 注册进程.暴力热加载
             ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload'))->getProcess());
 
             $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
-                echo "[" . self::udate() . "]  NOTICE  Server {$workerId} connect.\n";
+                echo "[" . Pub::udate() . "]  NOTICE  Server {$workerId} connect.\n";
             });
 
             $register->add($register::onClose, function (\swoole_server $server, int $workerId) {
-                echo "[" . self::udate() . "]  NOTICE  Server {$workerId} close.\n";
+                echo "[" . Pub::udate() . "]  NOTICE  Server {$workerId} close.\n";
             });
         }
 
         $register->add($register::onWorkerStart, function (\swoole_server $server, int $workerId) {
-            if (self::isDev()) {
+            if (Pub::isDev()) {
                 $workerFlag = $server->taskworker ? 'TaskWorker' : 'Worker';
-                echo "[" . self::udate() . "]  NOTICE  {$workerFlag} {$workerId} start.\n";
+                echo "[" . Pub::udate() . "]  NOTICE  {$workerFlag} {$workerId} start.\n";
             }
-
-            // get_included_files()数组中的文件表示进程启动前就加载了，所以无法reload
-            self::loadAppConfigFile(['app', 'param', 'router']);
 
             // 预创建连接池对象，避免在启动时突然大量请求,造成连接来不及创建从而失败的问题
             if ($server->taskworker == false) {
@@ -242,11 +136,16 @@ class EasySwooleEvent implements Event
     {
         // TODO: Implement onRequest() method.
         // ============ 接口版本校验 ============
-        self::parseUriPath($request, $response);
-        if (!$response->isEndResponse()) {
+        $msg = Pub::parseUriPath($request);
+        if (isset($msg)) {
+            $data = ['code' => Code::NOT_FOUND, 'data' => null, 'msg' => $msg];
+            $response->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $response->withHeader('Content-type', 'application/json;charset=utf-8');
+            $response->withStatus(Code::NOT_FOUND);
+            $response->end();
+        } else {
             $request->withAttribute('request_time', microtime(true));
-            $ip = ServerManager::getInstance()->getSwooleServer()->connection_info($request->getSwooleRequest()->fd);
-            $request->withAttribute('remote_ip', isset($ip['remote_ip']) ? $ip['remote_ip'] : 'Unknown');
+            $request->withAttribute('remote_ip', Pub::clientIp($request));
         }
         return true;
     }
@@ -254,18 +153,20 @@ class EasySwooleEvent implements Event
     public static function afterRequest(Request $request, Response $response): void
     {
         // TODO: Implement afterAction() method.
-        // ========= Session更新处理 =========
-        $sid = $request->getRequestParam('sess_token');
-        if (!empty($sid)) {
-            go(function () use ($sid) {
-                (new \App\Cache\Session())->refreshExpireTime($sid);
-            });
-        }
-        // ========= 超过N秒记录到slow日志文件 =========
-        if (Config::getInstance()->getConf('app.slow_log.enable')) {
-            go(function () use ($request) {
-                self::saveSlowLog($request);
-            });
+        if ($response->getStatusCode() == Code::OK) {
+            // ========= Session更新处理 =========
+            $sid = $request->getRequestParam('sess_token');
+            if (!empty($sid)) {
+                go(function () use ($sid) {
+                    (new \App\Cache\Session())->refreshExpireTime($sid);
+                });
+            }
+            // ========= 超过N秒记录到slow日志文件 =========
+            if (Config::getInstance()->getConf('app.slow_log.enable')) {
+                go(function () use ($request) {
+                    Pub::saveSlowLog($request);
+                });
+            }
         }
     }
 }
