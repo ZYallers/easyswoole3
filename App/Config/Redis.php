@@ -1,9 +1,6 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: zhongyongbiao
- * Date: 2018/10/26
- * Time: 下午5:27
+ * Redis 配置文件
  */
 
 return [

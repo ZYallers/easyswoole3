@@ -26,6 +26,17 @@ use EasySwoole\Utility\File;
 
 class EasySwooleEvent implements Event
 {
+    private static function setErrorReporting()
+    {
+        if (Pub::isDev()) {
+            ini_set('display_errors', 1);
+            error_reporting(-1);
+        } else {
+            ini_set('display_errors', 0);
+            error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
+        }
+    }
+
     private static function loadAppConfigFile(): void
     {
         $scan = File::scanDirectory(EASYSWOOLE_ROOT . '/App/Config');
@@ -72,6 +83,8 @@ class EasySwooleEvent implements Event
     public static function initialize()
     {
         // TODO: Implement initialize() method.
+        // 设置错误显示级别
+        self::setErrorReporting();
         // 设置时区
         date_default_timezone_set('Asia/Shanghai');
         // 载入Config文件夹中的配置文件

@@ -1,9 +1,6 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Neo
- * Date: 2018/11/24
- * Time: 下午6:56
+ * App 配置文件
  */
 
 return [

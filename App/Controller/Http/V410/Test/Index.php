@@ -28,8 +28,8 @@ class Index extends Controller
 {
     public function banben()
     {
-        dseed();
-        $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 8]);
+        sleep(4);
+        $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 9]);
     }
 
     public function routers()

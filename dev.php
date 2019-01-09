@@ -1,6 +1,6 @@
 <?php
 return [
-    'SERVER_NAME' => 'easyswoole3',
+    'SERVER_NAME' => 'easyswoole3', // 只能用下划线，不要用别的特殊字符
     'MAIN_SERVER' => [
         'LISTEN_ADDRESS' => '127.0.0.1',
         'PORT' => 9502,
@@ -24,7 +24,7 @@ return [
             'package_max_length' => 2097152, //默认2M，POST/文件上传最大尺寸限制，https://wiki.swoole.com/wiki/page/301.html
         ]
     ],
-    'TEMP_DIR' => '/tmp/easyswoole3', //请以绝对路径，不然守护模式运行会有问题
+    'TEMP_DIR' => null, //请以绝对路径，不然守护模式运行会有问题
     'LOG_DIR' => null, //请以绝对路径，不然守护模式运行会有问题
     'CONSOLE' => [
         'ENABLE' => false,
