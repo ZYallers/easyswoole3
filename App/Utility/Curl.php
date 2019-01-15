@@ -1,68 +1,64 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: root
- * Date: 18-10-16
- * Time: 下午2:16
- */
 
 namespace App\Utility;
 
 use EasySwoole\Component\Singleton;
-use EasySwoole\Curl\Field;
-use EasySwoole\Curl\Request;
-use EasySwoole\Curl\Response;
+use EasySwoole\HttpClient\HttpClient;
+use EasySwoole\HttpClient\Bean\Response;
 
 class Curl
 {
     use Singleton;
 
     /**
-     * @param string $method
-     * @param string $uri
+     * @param string $url
      * @param array|null $params
      * @return Response
      */
-    public function request(string $method, string $uri, array $params = null): Response
+    public function post(string $url, ?array $params = null): Response
     {
-        $request = new Request($uri);
-        switch (strtoupper($method)) {
-            case 'GET' :
-                if ($params && isset($params['query'])) {
-                    foreach ($params['query'] as $key => $value) {
-                        $request->addGet(new Field($key, $value));
-                    }
-                }
-                break;
-            case 'POST' :
-                if ($params && isset($params['form_params'])) {
-                    foreach ($params['form_params'] as $key => $value) {
-                        $request->addPost(new Field($key, $value));
-                    }
-                } elseif ($params && isset($params['body'])) {
-                    if (!isset($params['header']['Content-Type'])) {
-                        $params['header']['Content-Type'] = 'application/json; charset=utf-8';
-                    }
-                    $request->setUserOpt([CURLOPT_POSTFIELDS => $params['body']]);
-                }
-                break;
-            default:
-                throw new \InvalidArgumentException("Method error");
-                break;
+        $client = new HttpClient();
+        if (isset($params['timeout'])) {
+            $client->setTimeout($params['timeout']);
         }
-
-        if (isset($params['header']) && !empty($params['header']) && is_array($params['header'])) {
-            foreach ($params['header'] as $key => $value) {
-                $string = "{$key}:$value";
-                $header[] = $string;
-            }
-            $request->setUserOpt([CURLOPT_HTTPHEADER => $header]);
+        if (isset($params['headers'])) {
+            $client->setHeaders($params['headers']);
         }
-
-        if (isset($params['opt']) && !empty($params['opt']) && is_array($params['opt'])) {
-            $request->setUserOpt($params['opt']);
+        if (isset($params['cookies'])) {
+            $client->addCookies($params['cookies']);
         }
+        if (isset($params['form'])) {
+            $client->post($params['form']);
+        } elseif (isset($params['body'])) {
+            $client->post($params['body']);
+        } else {
+            $client->post();
+        }
+        return $client->setUrl($url)->exec();
+    }
 
-        return $request->exec();
+    /**
+     * @param string $url
+     * @param array|null $params
+     * @return Response
+     */
+    public function get(string $url, ?array $params = null): Response
+    {
+        $client = new HttpClient();
+        if (isset($params['timeout'])) {
+            $client->setTimeout($params['timeout']);
+        }
+        if (isset($params['headers'])) {
+            $client->setHeaders($params['headers']);
+        }
+        if (isset($params['cookies'])) {
+            $client->addCookies($params['cookies']);
+        }
+        if (isset($params['query'])) {
+            $querys = http_build_query($params['query']);
+            $urlQuery = parse_url($url, PHP_URL_QUERY);
+            $url .= (empty($urlQuery) ? '?' : '&') . $querys;
+        }
+        return $client->setUrl($url)->exec();
     }
 }

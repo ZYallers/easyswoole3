@@ -59,8 +59,8 @@ class Index extends Controller
 
     public function curl()
     {
-        $resp = Curl::getInstance()->request('get', 'http://ip.taobao.com/service/getIpInfo.php',
-            ['query' => ['ip' => '121.40.81.149']]);
-        $this->writeJson(Code::OK, ['body' => $resp->getBody(), 'error' => $resp->getError()]);
+        $resp = Curl::getInstance()->get('https://www.kuaidi100.com/query', ['timeout' => 3,
+            'query' => ['postid' => '800125432030318719', 'type' => 'yuantong']]);
+        $this->writeJson(Code::OK, ['body' => $resp->getBody(), 'code' => $resp->getStatusCode(), 'error' => $resp->getErrMsg()]);
     }
 }

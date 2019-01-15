@@ -151,7 +151,8 @@ class Pub
             $text[] = '`UserAgent:` ' . $userAgent;
         }
         $body = ['msgtype' => 'markdown', 'markdown' => ['title' => $title, 'text' => join('  ' . PHP_EOL, $text)]];
-        Curl::getInstance()->request('post', $cf->getConf('app.dingtalk.uri'), ['body' => json_encode($body)]);
+        Curl::getInstance()->post($cf->getConf('app.dingtalk.uri'), ['body' => json_encode($body),
+            'timeout' => 3, 'headers' => ['Content-Type' => 'application/json; charset=utf-8']]);
     }
 
     /**
@@ -206,24 +207,26 @@ class Pub
     /**
      * 带md5验证的curl请求
      * @param string $method
-     * @param string $uri
+     * @param string $url
      * @param array|null $params
      * @param string $tokenKey
      * @return array|null
      */
-    static function requestWithSign(string $method, string $uri, array $params = null, string $tokenKey = null): ?array
+    static function requestWithSign(string $method, string $url, array $params = null, string $tokenKey = null): ?array
     {
         $now = time();
         if (is_null($tokenKey)) {
             $tokenKey = Config::getInstance()->getConf('app.token.key');
         }
-        if (strtoupper($method) == 'POST') {
-            $params['form_params']['utime'] = $now;
-            $params['form_params']['from_where'] = 'admin';
-            $params['form_params']['sign'] = base64_encode(md5($now . $tokenKey));
+        $method = strtolower($method);
+        if ($method == 'post') {
+            $params['form']['utime'] = $now;
+            $params['form']['from_where'] = 'admin';
+            $params['form']['sign'] = base64_encode(md5($now . $tokenKey));
             if (isset($_REQUEST['sess_token'])) {
-                $params['form_params']['sess_token'] = $_REQUEST['sess_token'];
+                $params['form']['sess_token'] = $_REQUEST['sess_token'];
             }
+            $body = Curl::getInstance()->post($url, $params)->getBody();
         } else {
             $params['query']['utime'] = $now;
             $params['query']['from_where'] = 'admin';
@@ -231,8 +234,8 @@ class Pub
             if (isset($_REQUEST['sess_token'])) {
                 $params['query']['sess_token'] = $_REQUEST['sess_token'];
             }
+            $body = Curl::getInstance()->get($url, $params)->getBody();
         }
-        $body = Curl::getInstance()->request($method, $uri, $params)->getBody();
-        return !empty($body) ? json_decode($body, true) : null;
+        return empty($body) ? null : json_decode($body, true);
     }
 }

@@ -53,7 +53,7 @@ class ThrowtablePushMsgTask extends AbstractCronTask
         return self::$rate;
     }
 
-    public static function run(\swoole_server $server, int $taskId, int $fromWorkerId)
+    public static function run(\swoole_server $server, int $taskId, int $fromWorkerId, $flags = null)
     {
         // TODO: Implement run() method.
         $rate = self::getRate();

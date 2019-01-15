@@ -8,22 +8,51 @@
 
 namespace App\Utility;
 
-
 use EasySwoole\EasySwoole\Config;
-use EasySwoole\Trace\AbstractInterface\LoggerWriterInterface;
+use EasySwoole\Trace\AbstractInterface\LoggerInterface;
 
-class Logger implements LoggerWriterInterface
+class Logger implements LoggerInterface
 {
-    public function writeLog($obj, $logCategory, $timeStamp)
+    private $logDir;
+    private $serverName;
+
+    function __construct(string $logDir = null)
     {
-        // TODO: Implement writeLog() method.
-        $logDir = Config::getInstance()->getConf('LOG_DIR');
-        $baseDir = $logDir . '/' . date('Ymd', $timeStamp);
-        if (!is_dir($baseDir)) {
-            mkdir($baseDir, 0777, true);
+        $this->serverName = Config::getInstance()->getConf('SERVER_NAME');
+        if (empty($logDir)) {
+            $logDir = EASYSWOOLE_ROOT . '/Log';
         }
-        $str = '[' . date('Y/m/d H:i:s', $timeStamp) . ']: ' . $obj . PHP_EOL;
-        $filePath = $baseDir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.' . $logCategory . '.log';
-        file_put_contents($filePath, $str, FILE_APPEND | LOCK_EX);
+        $this->logDir = $logDir;
+
+    }
+
+    public function log(string $str, $logCategory, int $timestamp = null)
+    {
+        // TODO: Implement log() method.
+        if (is_null($timestamp)) {
+            $timestamp = time();
+        }
+        $dir = $this->logDir . '/' . date('Ymd', $timestamp);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $filePath = $dir . '/' . $this->serverName . '.' . $logCategory . '.log';
+        $date = date('Y/m/d H:i:s', $timestamp);
+        $content = "[{$date}][{$logCategory}]: {$str}\n";
+        file_put_contents($filePath, $content, FILE_APPEND | LOCK_EX);
+    }
+
+    public function console(string $str, $category = null, $saveLog = false)
+    {
+        // TODO: Implement console() method.
+        if (empty($category)) {
+            $category = 'console';
+        }
+        $time = time();
+        $date = date('Y/m/d H:i:s', $time);
+        echo "[{$date}][{$category}]: {$str}\n";
+        if ($saveLog) {
+            $this->log($str, $category, $time);
+        }
     }
 }

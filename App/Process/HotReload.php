@@ -165,7 +165,7 @@ class HotReload extends AbstractProcess
         $monitorExt = $this->getArg('monitorExt');
 
         // 指定多久执行检测一次文件变动
-        $rate = $rate ? intval($rate) : 5;
+        $rate = $rate ? intval($rate) : 10;
         // 指定是否禁用inotify扩展
         $disableInotify = $disableInotify ? boolval($disableInotify) : true;
         // 指定需要监视的目录，建议只监视App目录下的文件变更

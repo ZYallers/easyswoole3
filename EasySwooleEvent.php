@@ -29,10 +29,10 @@ class EasySwooleEvent implements Event
     private static function setErrorReporting()
     {
         if (Pub::isDev()) {
-            ini_set('display_errors', 1);
+            ini_set('display_errors', 'On');
             error_reporting(-1);
         } else {
-            ini_set('display_errors', 0);
+            ini_set('display_errors', 'Off');
             error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
         }
     }
@@ -101,8 +101,9 @@ class EasySwooleEvent implements Event
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
         // 配置http控制器对象池最大数量，默认为15个
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15);
-        // 注入日志处理类
-        Logger::getInstance()->setLoggerWriter(new \App\Utility\Logger());
+        // 配置自定人日志处理类
+        Di::getInstance()->set(SysConst::LOGGER_HANDLER, new \App\Utility\Logger());
+
         // 注册连接池
         self::registerPool();
     }
