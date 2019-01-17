@@ -17,8 +17,8 @@ abstract class Model
 {
     private $db;
     private $className;
-    private $tryTimes = 3;
     protected $tableName;
+    private $tryTimes = 3;
 
     protected function __construct(string $className)
     {
@@ -29,6 +29,9 @@ abstract class Model
                 $this->db = $db;
                 break;
             }
+        }
+        if (!$db instanceof MysqlObject) {
+            throw new \Exception('Model pool is empty');
         }
     }
 

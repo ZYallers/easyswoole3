@@ -28,6 +28,9 @@ abstract class Cache
                 break;
             }
         }
+        if (!$cache instanceof RedisObject) {
+            throw new \Exception('Cache pool is empty');
+        }
     }
 
     /**
