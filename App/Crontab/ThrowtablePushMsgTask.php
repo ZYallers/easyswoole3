@@ -45,7 +45,7 @@ class ThrowtablePushMsgTask extends AbstractCronTask
     {
         if (!isset(self::$rate)) {
             $rate = Config::getInstance()->getConf('app.throw_check_rate');
-            if (!(intval($rate) > 0)) {
+            if (!intval($rate) > 0) {
                 $rate = 10;
             }
             self::$rate = $rate;

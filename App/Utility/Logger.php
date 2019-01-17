@@ -23,10 +23,9 @@ class Logger implements LoggerInterface
             $logDir = EASYSWOOLE_ROOT . '/Log';
         }
         $this->logDir = $logDir;
-
     }
 
-    public function log(string $str, $logCategory, int $timestamp = null)
+    public function log(string $str, $logCategory = null, int $timestamp = null): ?string
     {
         // TODO: Implement log() method.
         if (is_null($timestamp)) {
@@ -38,11 +37,12 @@ class Logger implements LoggerInterface
         }
         $filePath = $dir . '/' . $this->serverName . '.' . $logCategory . '.log';
         $date = date('Y/m/d H:i:s', $timestamp);
-        $content = "[{$date}][{$logCategory}]: {$str}\n";
-        file_put_contents($filePath, $content, FILE_APPEND | LOCK_EX);
+        $content = "[{$date}][{$logCategory}]: {$str}";
+        file_put_contents($filePath, "{$content}\n", FILE_APPEND | LOCK_EX);
+        return $content;
     }
 
-    public function console(string $str, $category = null, $saveLog = false)
+    public function console(string $str, $category = null, $saveLog = false): ?string
     {
         // TODO: Implement console() method.
         if (empty($category)) {
@@ -50,9 +50,11 @@ class Logger implements LoggerInterface
         }
         $time = time();
         $date = date('Y/m/d H:i:s', $time);
-        echo "[{$date}][{$category}]: {$str}\n";
+        $content = "[{$date}][{$category}]: {$str}";
+        echo "{$content}\n";
         if ($saveLog) {
             $this->log($str, $category, $time);
         }
+        return $content;
     }
 }

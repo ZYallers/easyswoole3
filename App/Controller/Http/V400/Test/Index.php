@@ -18,25 +18,25 @@ use EasySwoole\EasySwoole\Swoole\Task\TaskManager;
 
 class Index extends Controller
 {
-    public function banben()
+    function banben()
     {
         $this->response()->write($this->request()->getUri()->getPath());
     }
 
-    public function allconfig()
+    function allconfig()
     {
         $config = Config::getInstance()->toArray();
         $this->writeJson(Code::OK, $config);
     }
 
-    public function sleep()
+    function sleep()
     {
         $time = intval($this->request()->getRequestParam('time'));
         sleep($time);
         $this->writeJson(Code::OK, null, "sleep {$time}s.");
     }
 
-    public function bingfa()
+    function bingfa()
     {
         $tasks[] = function () {
             sleep(1);
@@ -57,7 +57,7 @@ class Index extends Controller
         $this->writeJson(200, $data);
     }
 
-    public function curl()
+    function curl()
     {
         $resp = Curl::getInstance()->get('https://www.kuaidi100.com/query', ['timeout' => 3,
             'query' => ['postid' => '800125432030318719', 'type' => 'yuantong']]);
