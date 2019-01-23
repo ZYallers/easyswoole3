@@ -8,11 +8,9 @@
 
 namespace App\Controller\Http\V400\Test;
 
-
-use App\Cache\User\UserInfo;
 use App\Utility\Abst\Controller;
 use App\Utility\Code;
-use App\Utility\Curl;
+use App\Utility\HttpClient;
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Swoole\Task\TaskManager;
 
@@ -59,7 +57,7 @@ class Index extends Controller
 
     function curl()
     {
-        $resp = Curl::getInstance()->get('https://www.kuaidi100.com/query', ['timeout' => 3,
+        $resp = HttpClient::getInstance()->get('https://www.kuaidi100.com/query', ['timeout' => 3,
             'query' => ['postid' => '800125432030318719', 'type' => 'yuantong']]);
         $this->writeJson(Code::OK, ['body' => $resp->getBody(), 'code' => $resp->getStatusCode(), 'error' => $resp->getErrMsg()]);
     }

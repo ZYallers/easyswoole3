@@ -8,7 +8,8 @@
     "easyswoole/easyswoole": "3.x-dev",
     "easyswoole/swoole-ide-helper": "^1.2",
     "easyswoole/mysqli": "^1.1",
-    "easyswoole/http-client": "^1.0"
+    "easyswoole/http-client": "^1.0",
+    "easyswoole/curl": "^1.0"
   },
   "repositories": {
     "packagist": {

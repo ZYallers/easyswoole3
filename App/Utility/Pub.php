@@ -151,7 +151,7 @@ class Pub
             $text[] = '`UserAgent:` ' . $userAgent;
         }
         $body = ['msgtype' => 'markdown', 'markdown' => ['title' => $title, 'text' => join('  ' . PHP_EOL, $text)]];
-        Curl::getInstance()->post($cf->getConf('app.dingtalk.uri'), ['body' => json_encode($body),
+        HttpClient::getInstance()->post($cf->getConf('app.dingtalk.uri'), ['body' => json_encode($body),
             'timeout' => 3, 'headers' => ['Content-Type' => 'application/json; charset=utf-8']]);
     }
 
@@ -226,7 +226,7 @@ class Pub
             if (isset($_REQUEST['sess_token'])) {
                 $params['form']['sess_token'] = $_REQUEST['sess_token'];
             }
-            $body = Curl::getInstance()->post($url, $params)->getBody();
+            $body = HttpClient::getInstance()->post($url, $params)->getBody();
         } else {
             $params['query']['utime'] = $now;
             $params['query']['from_where'] = 'admin';
@@ -234,7 +234,7 @@ class Pub
             if (isset($_REQUEST['sess_token'])) {
                 $params['query']['sess_token'] = $_REQUEST['sess_token'];
             }
-            $body = Curl::getInstance()->get($url, $params)->getBody();
+            $body = HttpClient::getInstance()->get($url, $params)->getBody();
         }
         return empty($body) ? null : json_decode($body, true);
     }

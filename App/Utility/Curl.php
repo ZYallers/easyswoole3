@@ -1,64 +1,71 @@
 <?php
-
 namespace App\Utility;
 
 use EasySwoole\Component\Singleton;
-use EasySwoole\HttpClient\HttpClient;
-use EasySwoole\HttpClient\Bean\Response;
+use EasySwoole\Curl\Field;
+use EasySwoole\Curl\Request;
+use EasySwoole\Curl\Response;
 
 class Curl
 {
     use Singleton;
 
     /**
-     * @param string $url
+     * post
+     * @param string $uri
      * @param array|null $params
      * @return Response
      */
-    public function post(string $url, ?array $params = null): Response
+    public function post(string $uri, array $params = null): Response
     {
-        $client = new HttpClient();
-        if (isset($params['timeout'])) {
-            $client->setTimeout($params['timeout']);
+        $request = new Request($uri);
+        if (isset($params['headers']) && is_array($params['headers'])) {
+            $headers = [];
+            foreach ($params['headers'] as $key => $value) {
+                $headers[] = "{$key}:$value";
+            }
+            $request->setUserOpt([CURLOPT_HTTPHEADER => $headers]);
         }
-        if (isset($params['headers'])) {
-            $client->setHeaders($params['headers']);
-        }
-        if (isset($params['cookies'])) {
-            $client->addCookies($params['cookies']);
-        }
-        if (isset($params['form'])) {
-            $client->post($params['form']);
+        if (isset($params['form']) && is_array($params['form'])) {
+            foreach ($params['form'] as $key => $value) {
+                $request->addPost(new Field($key, $value));
+            }
         } elseif (isset($params['body'])) {
-            $client->post($params['body']);
-        } else {
-            $client->post();
+            if (!isset($params['header']['Content-Type'])) {
+                $params['header']['Content-Type'] = 'application/json; charset=utf-8';
+            }
+            $request->setUserOpt([CURLOPT_POSTFIELDS => $params['body']]);
         }
-        return $client->setUrl($url)->exec();
+        if (isset($params['options']) && is_array($params['options'])) {
+            $request->setUserOpt($params['options']);
+        }
+        return $request->exec();
     }
 
     /**
-     * @param string $url
+     * get
+     * @param string $uri
      * @param array|null $params
      * @return Response
      */
-    public function get(string $url, ?array $params = null): Response
+    public function get(string $uri, array $params = null): Response
     {
-        $client = new HttpClient();
-        if (isset($params['timeout'])) {
-            $client->setTimeout($params['timeout']);
+        $request = new Request($uri);
+        if (isset($params['headers']) && is_array($params['headers'])) {
+            $headers = [];
+            foreach ($params['headers'] as $key => $value) {
+                $headers[] = "{$key}:$value";
+            }
+            $request->setUserOpt([CURLOPT_HTTPHEADER => $headers]);
         }
-        if (isset($params['headers'])) {
-            $client->setHeaders($params['headers']);
+        if (isset($params['query']) && is_array($params['query'])) {
+            foreach ($params['query'] as $key => $value) {
+                $request->addGet(new Field($key, $value));
+            }
         }
-        if (isset($params['cookies'])) {
-            $client->addCookies($params['cookies']);
+        if (isset($params['options']) && is_array($params['options'])) {
+            $request->setUserOpt($params['options']);
         }
-        if (isset($params['query'])) {
-            $querys = http_build_query($params['query']);
-            $urlQuery = parse_url($url, PHP_URL_QUERY);
-            $url .= (empty($urlQuery) ? '?' : '&') . $querys;
-        }
-        return $client->setUrl($url)->exec();
+        return $request->exec();
     }
 }
