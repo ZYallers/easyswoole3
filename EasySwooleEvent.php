@@ -101,6 +101,8 @@ class EasySwooleEvent implements Event
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_MAX_DEPTH, 5);
         // 配置http控制器对象池最大数量，默认为15个
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_MAX_NUM, 15);
+        // 配置http控制器对象池等待时间，默认为5秒
+        Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_WAIT_TIME, 5);
         // 配置自定人日志处理类
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, new \App\Utility\Logger());
 
