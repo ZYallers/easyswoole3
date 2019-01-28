@@ -17,9 +17,6 @@ class Cache extends AbstractPool
     protected function createObject()
     {
         // TODO: Implement createObject() method.
-        /**
-         * 创建对象的时候，请加try，尽量不要抛出异常
-         */
         $return = null;
         try {
             $redis = new RedisObject();
@@ -32,6 +29,7 @@ class Cache extends AbstractPool
             }
         } catch (\Throwable $throwable) {
             // to do something...
+            throw $throwable;
         } finally {
             return $return;
         }

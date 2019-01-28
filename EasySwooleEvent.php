@@ -105,7 +105,6 @@ class EasySwooleEvent implements Event
         Di::getInstance()->set(SysConst::HTTP_CONTROLLER_POOL_WAIT_TIME, 5);
         // 配置自定人日志处理类
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, new \App\Utility\Logger());
-
         // 注册连接池
         self::registerPool();
     }

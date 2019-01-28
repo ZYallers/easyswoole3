@@ -8,10 +8,10 @@
 
 namespace App\Utility\Abst;
 
-use App\Utility\AppConst;
 use App\Utility\Pool\MysqlObject;
+use EasySwoole\Component\Pool\Exception\PoolEmpty;
+use EasySwoole\Component\Pool\Exception\PoolException;
 use EasySwoole\Component\Pool\PoolManager;
-use EasySwoole\EasySwoole\Config;
 
 abstract class Model
 {
@@ -22,16 +22,23 @@ abstract class Model
 
     protected function __construct(string $className)
     {
-        $this->className = $className;
-        for ($i = 0; $i < $this->tryTimes; $i++) {
-            $db = PoolManager::getInstance()->getPool($this->className)->getObj();
-            if ($db instanceof MysqlObject) {
-                $this->db = $db;
-                break;
+        if (class_exists($className)) {
+            $this->className = $className;
+            for ($i = 0; $i < $this->tryTimes; $i++) {
+                $db = PoolManager::getInstance()->getPool($this->className)->getObj();
+                if ($db instanceof MysqlObject) {
+                    $this->db = $db;
+                    break;
+                }
             }
-        }
-        if (!$db instanceof MysqlObject) {
-            throw new \Exception('Model pool is empty');
+            if (is_null($db)) {
+                throw new PoolEmpty("{$className} pool is empty");
+            }
+            if (!$db instanceof MysqlObject) {
+                throw new PoolException("{$className} convert to pool error");
+            }
+        } else {
+            throw new \Exception("{$className} class does not exist");
         }
     }
 

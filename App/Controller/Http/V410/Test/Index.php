@@ -72,7 +72,7 @@ class Index extends Controller
         $this->writeJson(Code::OK, $data);
     }
 
-    function ptss()
+    private function ptss()
     {
         $p1 = new Process(function (Process $worker) {
             echo date('Y.m.d H:i:s') . ": worker " . $worker->pid . " started....." . PHP_EOL;
