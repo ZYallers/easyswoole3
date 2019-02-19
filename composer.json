@@ -5,7 +5,7 @@
     }
   },
   "require": {
-    "easyswoole/easyswoole": "3.x-dev",
+    "easyswoole/easyswoole": "3.1.13",
     "easyswoole/swoole-ide-helper": "^1.2",
     "easyswoole/mysqli": "^1.1",
     "easyswoole/http-client": "^1.0",

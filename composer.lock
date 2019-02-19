@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "68130ff03d46de61d20c4a3e69ce2ced",
+    "content-hash": "f632f56dc2d5427703838c38e8aa7513",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -201,16 +201,16 @@
         },
         {
             "name": "easyswoole/easyswoole",
-            "version": "3.x-dev",
+            "version": "3.1.13",
             "source": {
                 "type": "git",
                 "url": "https://github.com/easy-swoole/easyswoole.git",
-                "reference": "1e6e64177197f33668e4dd65d7347cd283cb7dd7"
+                "reference": "2893a1429d95913d5da512bde606d51e1b641571"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-swoole/easyswoole/zipball/1e6e64177197f33668e4dd65d7347cd283cb7dd7",
-                "reference": "1e6e64177197f33668e4dd65d7347cd283cb7dd7",
+                "url": "https://api.github.com/repos/easy-swoole/easyswoole/zipball/2893a1429d95913d5da512bde606d51e1b641571",
+                "reference": "2893a1429d95913d5da512bde606d51e1b641571",
                 "shasum": ""
             },
             "require": {
@@ -223,7 +223,7 @@
                 "easyswoole/spl": "^1.0",
                 "easyswoole/trace": "^1.0",
                 "easyswoole/utility": "^1.0",
-                "ext-swoole": ">=4.2.13",
+                "ext-swoole": ">=4.2.6",
                 "jeremeamia/superclosure": "^2.4",
                 "php": ">=7.1.0"
             },
@@ -257,7 +257,7 @@
                 "framework",
                 "swoole"
             ],
-            "time": "2019-02-15T05:13:25+00:00"
+            "time": "2019-01-22T14:13:02+00:00"
         },
         {
             "name": "easyswoole/fast-cache",
@@ -960,9 +960,7 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "easyswoole/easyswoole": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
