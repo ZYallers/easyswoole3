@@ -20,6 +20,11 @@ class Pub
         return Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV;
     }
 
+    static function getProcessFullName(string $processName): string
+    {
+        return Config::getInstance()->getConf('SERVER_NAME') . '.Process.' . $processName;
+    }
+
     static function udate(string $format = 'Y-m-d H:i:s.u', ?float $utimestamp = null): ?string
     {
         if (is_null($utimestamp)) {

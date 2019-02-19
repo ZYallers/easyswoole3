@@ -116,14 +116,15 @@ class EasySwooleEvent implements Event
         Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
 
         // 配置swoole日志文件名
-        $logDir = Config::getInstance()->getConf('LOG_DIR');
-        $logFile = $logDir . '/' . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
+        $logFile = Config::getInstance()->getConf('LOG_DIR') . '/'
+            . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
         Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
         ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
         if (Pub::isDev()) {
             // 注册进程.暴力热加载
-            ServerManager::getInstance()->getSwooleServer()->addProcess((new \App\Process\HotReload('HotReload'))->getProcess());
+            ServerManager::getInstance()->getSwooleServer()
+                ->addProcess((new \App\Process\HotReload(Pub::getProcessFullName('HotReload')))->getProcess());
 
             $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
                 echo "[" . Pub::udate() . "]  NOTICE  Server {$workerId} connect.\n";
