@@ -22,7 +22,7 @@ return [
             'enable_reuse_port' => true, //设置端口重用，此参数用于优化TCP连接的Accept性能，https://wiki.swoole.com/wiki/page/486.html
             'tcp_defer_accept' => 5, //设置为一个数值，表示当一个TCP连接有数据发送时才触发accept，https://wiki.swoole.com/wiki/page/317.html
             'open_tcp_nodelay' => true, //开启后TCP连接发送数据时会关闭Nagle合并算法，立即发往客户端连接，https://wiki.swoole.com/wiki/page/316.html
-            'package_max_length' => 2097152, //默认2M，POST/文件上传最大尺寸限制，https://wiki.swoole.com/wiki/page/301.html
+            'package_max_length' => 64 * 1024 * 1024, //64M，单位字节，POST/文件上传最大尺寸限制，https://wiki.swoole.com/wiki/page/301.html
             'enable_static_handler' => false, //禁止配置静态文件直接访问，https://wiki.swoole.com/wiki/page/783.html
         ]
     ],
