@@ -46,7 +46,7 @@ class ThrowtablePushMsgTask extends AbstractCronTask
         if (!isset(self::$rate)) {
             $rate = Config::getInstance()->getConf('app.throw_check_rate');
             if (!intval($rate) > 0) {
-                $rate = 10;
+                $rate = 10; //检测异常并推送消息定时任务的检测频率，默认10秒
             }
             self::$rate = $rate;
         }

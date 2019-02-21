@@ -43,12 +43,12 @@ EasySwoole 是一款基于Swoole Server 开发的常驻内存型的分布式PHP�
 
 ## 部署流程
 1. 升级PHP到7.1版本以上；
-2. 安装PHP扩展`Swoole`版本4.2.13以上，建议通过`pecl`方式安装，简单明了；
+2. 安装PHP扩展`Swoole`版本4.2.12以上，建议通过`pecl`方式安装，简单明了；
 3. 安装PHP扩展`Redis`，同上建议通过`pecl`安装；
 4. 安装`composer`；
 5. 克隆下来该项目;
 6. 进入项目根目录下执行`composer install`，来拉取需要的依赖库；
-7. 执行`composer composer dump-autoload -a`，优化classmap加载;
+7. 执行`composer dump-autoload -a`，优化classmap加载;
 8. 配置日志文件目录`Log`和临时文件目录`Temp`；
 9. 执行`php easyswoole start d`，开始你的探索之旅！
 

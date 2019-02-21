@@ -13,8 +13,8 @@ return [
     'test/index/gotest' => ['version' => '4.1.0+', 'method' => 'get'],
     'test/index/ptest' => ['version' => '4.1.0+', 'method' => 'get'],
     'test/index/routers' => ['version' => '4.1.0+', 'method' => 'get'],
-    'test/index/session-data' => ['version' => '4.1.0+', 'method' => 'get', 'forward' => 'test/index/getSessionData'],
     'test/index/is-login' => ['version' => '4.1.0+', 'method' => 'get', 'forward' => 'test/index/isLogin'],
-    'test/index/userinfo' => ['version' => '4.1.0+', 'method' => 'get'],
-    'test/index/utest' => ['version' => '4.1.0+', 'method' => 'get'],
+    'account/user/session-data' => ['version' => '4.1.0+', 'method' => 'get', 'forward' => 'account/user/getSessionData'],
+    'account/user/info' => ['version' => '4.1.0+', 'method' => 'get'],
+    'account/user/infos' => ['version' => '4.1.0+', 'method' => 'get'],
 ];
