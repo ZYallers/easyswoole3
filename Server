@@ -19,58 +19,82 @@ echoFun(){
 esac
 }
 
+helpFun(){
+    echoFun "操作:" tip
+    echoFun "  start       启动服务" ok
+    echoFun "  stop        停止服务" ok
+    echoFun "  restart     重载服务" ok
+    echoFun "  reload      热重载服务" ok
+    echoFun "  help        查看命令的帮助信息" ok
+    echo ""
+    echoFun "有关某个操作的详细信息 请使用 help 命令查看!" err
+    exit 0
+}
+
+if [ "$1" == "help" ]; then
+    helpFun
+elif [ ! -n "$1" ]; then
+    helpFun
+fi
+
+CURRENT_COMMAND=$0
+SERVER_NAME=$1
+
 psFun(){
-    echoFun "-------------------------------------process------------------------------------------" tip
-    ps axuw|head -1;ps axuw|grep -E 'fswatch|es.account.hxsapp.com'|grep -v grep
-    echoFun "-------------------------------------process------------------------------------------" tip
+    echoFun "-------------------------------------Process------------------------------------------" err
+    ps axuw|head -1;ps axuw|grep "${SERVER_NAME}"|grep -v -E "grep|${CURRENT_COMMAND}"
+    echoFun "-------------------------------------Process------------------------------------------" err
 }
 
 startFun(){
-    if [ ! -n "$1" ] ;then
-        echoFun "Error: you have not choice log dir!" err
-        exit
-    fi
-
-    cur_date=`date +%Y%m%d`
-    base_dir=$1/$cur_date
-    if [ ! -d "$base_dir" ]; then
-        mkdir "$base_dir"
-    fi
-
-    parent_dir_name=`pwd | awk -F "/" '{print $NF}'`
-    log_file=$base_dir/$parent_dir_name.fswatch_reload.log
-    nohup ./fswatch.sh ./App > $log_file 2>&1 &
-
+    composer dump-autoload -a
+    sleep 1
+    php easyswoole start d
+    sleep 1
     psFun
-
     echoFun "Info: Server started!" ok
 }
 
 stopFun(){
     psFun
-
-    if [ "$(ps -ef|grep 'fswatch'|grep -v grep|awk '{print $2}')" != "" ] ;then
-        kill -9 $(ps -ef|grep 'fswatch'|grep -v grep|awk '{print $2}')
-        echoFun "Info: fswatch killed." ok
-    fi
-
+    sleep 1
     php easyswoole stop
-    echoFun "Info: php stoped." ok
+    echoFun "Info: Server stoped!" ok
 }
 
-case $1 in
+reloadFun(){
+    IS_ALL=$1
+    if [ "$IS_ALL" == "all" ]; then
+        php easyswoole reload all
+     else
+        php easyswoole reload
+    fi
+    sleep 1
+    psFun
+    if [ "$IS_ALL" == "all" ]; then
+        echoFun "Info: Server all reloaded!" ok
+     else
+        echoFun "Info: Server reloaded!" ok
+    fi
+
+}
+
+case $2 in
         start)
-            startFun $2
+            startFun
         ;;
         stop)
             stopFun
         ;;
         restart)
             stopFun
-            startFun $2
+            startFun
+        ;;
+        reload)
+            reloadFun $3
         ;;
         *)
-            echoFun "Error: require arguments!" err
+            helpFun
         ;;
 esac
-exit
+exit 0

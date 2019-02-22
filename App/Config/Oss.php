@@ -4,8 +4,8 @@
  */
 
 return [
-    'accessKeyId' => '',
-    'accessKeySecret' => '',
-    'endpoint' => '',
-    'upload_bucket' => ''
+    'accessKeyId' => getenv('alioss_accesskeyid'),
+    'accessKeySecret' => getenv('alioss_accesskeysecret'),
+    'endpoint' => getenv('alioss_endpoint'),
+    'upload_bucket' => getenv('alioss_uploadbucket'),
 ];
