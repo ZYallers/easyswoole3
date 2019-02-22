@@ -16,13 +16,13 @@ class Logger implements LoggerInterface
     private $logDir;
     private $serverName;
 
-    function __construct(string $logDir = null)
+    function __construct()
     {
+        $this->logDir = Config::getInstance()->getConf('LOG_DIR');
         $this->serverName = Config::getInstance()->getConf('SERVER_NAME');
-        if (empty($logDir)) {
-            $logDir = EASYSWOOLE_ROOT . '/Log';
+        if (empty($this->logDir)) {
+            $this->logDir = EASYSWOOLE_ROOT . '/Log';;
         }
-        $this->logDir = $logDir;
     }
 
     public function log(string $str, $logCategory = null, int $timestamp = null): ?string
