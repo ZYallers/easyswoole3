@@ -31,55 +31,67 @@ helpFun(){
     exit 0
 }
 
-if [ "$1" == "help" ]; then
+args0=$0
+args1=$1
+args2=$2
+
+if [ "$args1" == "help" ]; then
     helpFun
-elif [ ! -n "$1" ]; then
+elif [ ! -n "$args1" ]; then
     helpFun
 fi
 
-CURRENT_COMMAND=$0
-SERVER_NAME=$1
+if [ ! -n "$args2" ]; then
+    args2=dev
+fi
+
+echoFun "Info: Runmode [${args2}]!" ok
+
+basepath=$(cd `dirname $0`; pwd)
+runmodeFile=${basepath}/${args2}.php
+
+if [ ! -e $runmodeFile ];then
+    echoFun "Error: Runmode file does not exits!" err
+    exit 0
+fi
+
+serverName=$(cat $runmodeFile | grep 'SERVER_NAME' | awk -F "'" '{print $4}')
+
+if [ ! -n "$serverName" ]; then
+    echoFun "Error: ServerName is empty" err
+    exit 0
+fi
+
+echoFun "Info: ServerName [${serverName}]!" ok
 
 psFun(){
     echoFun "-------------------------------------Process------------------------------------------" err
-    ps axuw|head -1;ps axuw|grep "${SERVER_NAME}"|grep -v -E "grep|${CURRENT_COMMAND}"
+    ps axuw|head -1;ps axuw|grep "${serverName}"|grep -v grep|grep -v "${args0}"
     echoFun "-------------------------------------Process------------------------------------------" err
 }
 
 startFun(){
     composer dump-autoload -a
-    sleep 1
-    php easyswoole start d
-    sleep 1
-    psFun
-    echoFun "Info: Server started!" ok
+    php easyswoole start d $args2
+    echoFun "Ok: Server started!" ok
 }
 
 stopFun(){
-    psFun
-    sleep 1
     php easyswoole stop
-    echoFun "Info: Server stoped!" ok
+    echoFun "Ok: Server stoped!" ok
 }
 
-reloadFun(){
-    IS_ALL=$1
-    if [ "$IS_ALL" == "all" ]; then
-        php easyswoole reload all
-     else
-        php easyswoole reload
-    fi
+reloadAllFun(){
+    php easyswoole reload all
     sleep 1
     psFun
-    if [ "$IS_ALL" == "all" ]; then
-        echoFun "Info: Server all reloaded!" ok
-     else
-        echoFun "Info: Server reloaded!" ok
-    fi
-
+    echoFun "Ok: Server all reloaded!" ok
 }
 
-case $2 in
+case $args1 in
+        status)
+            psFun
+        ;;
         start)
             startFun
         ;;
@@ -88,10 +100,11 @@ case $2 in
         ;;
         restart)
             stopFun
+            sleep 2
             startFun
         ;;
         reload)
-            reloadFun $3
+            reloadAllFun
         ;;
         *)
             helpFun

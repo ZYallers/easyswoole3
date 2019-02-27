@@ -21,7 +21,10 @@ class Index extends Controller
 {
     function banben()
     {
-        $this->writeJson(Code::OK, ['uri' => $this->request()->getUri()->__toString(), 't' => 9]);
+        $this->writeJson(Code::OK, [
+            'uri' => $this->request()->getUri()->__toString(),
+            't' => 11,
+        ]);
     }
 
     function routers()

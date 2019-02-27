@@ -143,11 +143,20 @@ class HotReload extends AbstractProcess
                 // 监视到需要进行热重启
                 echo "[" . $this->udate() . "]  NOTICE  Server hotReload: use {$usage} s, total: {$count} files, change: "
                     . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
-                ServerManager::getInstance()->getSwooleServer()->reload();
+                // 如果开启了Zend OPCache，最好还是reset下
+                if (extension_loaded('Zend OPcache')) {
+                    if (opcache_reset()) {
+                        echo "[" . $this->udate() . "]  NOTICE  OPcache reset finished.\n";
+                    } else {
+                        echo "[" . $this->udate() . "]  NOTICE  OPcache reset failed.\n";
+                    }
+                }
+                \Swoole\Timer::after(2000, function () {
+                    ServerManager::getInstance()->getSwooleServer()->reload();
+                });
             } else {
                 // 首次扫描不需要进行重启操作
-                echo "[" . $this->udate() . "]  NOTICE  Server hotReload: ready use {$usage} s, total: {$count} files, change: "
-                    . count($modifyInodeList) . " files.\n";
+                //echo "[" . $this->udate() . "]  NOTICE  Server hotReload: ready use {$usage} s, total: {$count} files, change: " . count($modifyInodeList) . " files.\n";
                 $this->isReady = true;
             }
         }
