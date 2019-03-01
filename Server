@@ -16,17 +16,16 @@ echoFun(){
         *)
             echo "$str"
         ;;
-esac
+    esac
 }
 
 helpFun(){
-    echoFun "操作:" tip
-    echoFun "  start       启动服务" ok
-    echoFun "  stop        停止服务" ok
-    echoFun "  restart     重载服务" ok
-    echoFun "  reload      热重载服务" ok
-    echoFun "  help        查看命令的帮助信息" ok
-    echo ""
+    echoFun "操作:" err
+    echoFun "    start [runMode=[develop|produce]]       启动服务" ok
+    echoFun "    stop                                    停止服务" ok
+    echoFun "    restart [runMode=[develop|produce]]     重载服务" ok
+    echoFun "    reload [type=[all]]                     热重载服务" ok
+    echoFun "    help                                    查看命令的帮助信息" ok
     echoFun "有关某个操作的详细信息 请使用 help 命令查看!" err
     exit 0
 }
@@ -41,70 +40,87 @@ elif [ ! -n "$args1" ]; then
     helpFun
 fi
 
-if [ ! -n "$args2" ]; then
-    args2=dev
-fi
-
-echoFun "Info: Runmode [${args2}]!" ok
-
-basepath=$(cd `dirname $0`; pwd)
-runmodeFile=${basepath}/${args2}.php
-
+basepath=$(cd `dirname $args0`; pwd)
+runmodeFile=${basepath}/dev.php
 if [ ! -e $runmodeFile ];then
-    echoFun "Error: Runmode file does not exits!" err
+    echoFun "ERROR: Runmode [dev.php] file does not exits!" err
     exit 0
 fi
 
 serverName=$(cat $runmodeFile | grep 'SERVER_NAME' | awk -F "'" '{print $4}')
-
 if [ ! -n "$serverName" ]; then
-    echoFun "Error: ServerName is empty" err
+    echoFun "ERROR: ServerName is empty!" err
     exit 0
 fi
-
-echoFun "Info: ServerName [${serverName}]!" ok
+echoFun "TIP: ServerName [$serverName]!" tip
 
 psFun(){
-    echoFun "-------------------------------------Process------------------------------------------" err
-    ps axuw|head -1;ps axuw|grep "${serverName}"|grep -v grep|grep -v "${args0}"
-    echoFun "-------------------------------------Process------------------------------------------" err
+    echoFun "-------------------------------------[Process]------------------------------------------" err
+    ps axuw|head -1;ps axuw|grep "$1"|grep -v grep|grep -v "$2"
+    echoFun "-------------------------------------[Process]------------------------------------------" err
 }
 
 startFun(){
+    echoFun "TIP: Ready start server..." tip
     composer dump-autoload -a
-    php easyswoole start d $args2
-    echoFun "Ok: Server started!" ok
+    echo ""
+    if [  "$1" == "produce" ]; then
+        echoFun "TIP: Runmode [produce]!" tip
+        php easyswoole start d produce
+    else
+        echoFun "TIP: Runmode [develop]!" tip
+        php easyswoole start d
+    fi
+    echo ""
+    echoFun "INFO: Server start finish!" ok
 }
 
 stopFun(){
+    echoFun "TIP: Ready stop server..." tip
+    echo ""
     php easyswoole stop
-    echoFun "Ok: Server stoped!" ok
+    echo ""
+    echoFun "INFO: Server stope finish!" ok
 }
 
-reloadAllFun(){
-    php easyswoole reload all
-    sleep 1
-    psFun
-    echoFun "Ok: Server all reloaded!" ok
+reloadFun(){
+    echoFun "INFO: Ready reload server..." ok
+    echo ""
+    if [ "$1" == "all" ]; then
+        php easyswoole reload all
+    else
+        php easyswoole reload
+    fi
+    echo ""
+    echoFun "INFO: Server reload finish!" ok
 }
 
 case $args1 in
         status)
-            psFun
+            psFun $serverName $args0
         ;;
         start)
-            startFun
+            startFun $args2
         ;;
         stop)
             stopFun
         ;;
         restart)
             stopFun
-            sleep 2
-            startFun
+            while true; do
+                count=`ps -ef|grep http|grep -v grep`
+                if [ "$?" == "0" ];then
+                    echo ""
+                    startFun $args2
+                    break
+                else
+                    echoFun "ERROR: Server stopping, waitting..." err
+                    sleep 1
+                fi
+            done
         ;;
         reload)
-            reloadAllFun
+            reloadFun $args2
         ;;
         *)
             helpFun
