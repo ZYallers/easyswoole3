@@ -108,7 +108,7 @@ case $args1 in
         restart)
             stopFun
             while true; do
-                count=`ps -ef|grep http|grep -v grep`
+                count=`ps -ef|grep "$serverName"|grep -v grep|grep -v "$args0"`
                 if [ "$?" == "0" ];then
                     echo ""
                     startFun $args2
