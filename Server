@@ -56,7 +56,7 @@ echoFun "TIP: ServerName [$serverName]!" tip
 
 psFun(){
     echoFun "-------------------------------------[Process]------------------------------------------" err
-    ps axuw|head -1;ps axuw|grep "$1"|grep -v grep|grep -v "$2"
+    ps axuw|head -1;ps axuw|grep "$1"|grep -v grep
     echoFun "-------------------------------------[Process]------------------------------------------" err
 }
 
@@ -97,7 +97,7 @@ reloadFun(){
 
 case $args1 in
         status)
-            psFun $serverName $args0
+            psFun $serverName
         ;;
         start)
             startFun $args2
@@ -108,14 +108,14 @@ case $args1 in
         restart)
             stopFun
             while true; do
-                count=`ps -ef|grep "$serverName"|grep -v grep|grep -v "$args0"`
-                if [ "$?" == "0" ];then
+                count=`echo $(ps -ef|grep "$serverName"|grep -v grep|wc -l)`
+                if [ "$count" == "0" ];then
                     echo ""
                     startFun $args2
                     break
                 else
                     echoFun "ERROR: Server stopping, waitting..." err
-                    sleep 1
+                    sleep 2
                 fi
             done
         ;;
