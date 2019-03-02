@@ -23,7 +23,7 @@ class Index extends Controller
     {
         $this->writeJson(Code::OK, [
             'uri' => $this->request()->getUri()->__toString(),
-            't' => 11,
+            't' => 20,
         ]);
     }
 

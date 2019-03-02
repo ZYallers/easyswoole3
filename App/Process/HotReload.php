@@ -99,7 +99,7 @@ class HotReload extends AbstractProcess
         $dirIterator = new \RecursiveDirectoryIterator($this->monitorDir);
         $iterator = new \RecursiveIteratorIterator($dirIterator);
         $inodeList = [];
-        $modifyInodeList = [];
+        $changeInodeList = [];
 
         /* @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -115,13 +115,13 @@ class HotReload extends AbstractProcess
                     $oldTime = $this->table->get($inode)['mtime'];
                     if ($oldTime != $mtime) {
                         $this->table->set($inode, ['mtime' => $mtime, 'file' => $path]);
-                        $modifyInodeList[] = 'update|' . $inode . '|' . $path;
+                        $changeInodeList[] = 'update|' . $inode . '|' . $path;
                         $doReload = true;
                     }
                 } else {
-                    // 新建文件或修改文件，变更了inode
+                    // 新建文件，变更了inode
                     $this->table->set($inode, ['mtime' => $mtime, 'file' => $path]);
-                    $modifyInodeList[] = 'add|' . $inode . '|' . $path;
+                    $changeInodeList[] = 'add|' . $inode . '|' . $path;
                     $doReload = true;
                 }
             }
@@ -131,32 +131,42 @@ class HotReload extends AbstractProcess
             // 迭代table寻找需要删除的inode
             if (!in_array($inode, $inodeList)) {
                 $this->table->del($inode);
-                $modifyInodeList[] = 'delete|' . $inode . '|' . $value['file'];
+                $changeInodeList[] = 'delete|' . $inode . '|' . $value['file'];
                 $doReload = true;
             }
         }
 
         if ($doReload) {
             $count = $this->table->count();
+            $changeCount = count($changeInodeList);
             $usage = round(microtime(true) - $startTime, 3);
             if ($this->isReady) {
                 // 监视到需要进行热重启
-                echo "[" . $this->udate() . "]  NOTICE  Server hotReload: use {$usage} s, total: {$count} files, change: "
-                    . count($modifyInodeList) . " files: " . var_export($modifyInodeList, true) . "\n";
-                // 如果开启了Zend OPCache，最好还是reset下
+                $changeFiles = var_export($changeInodeList, true);
+                echo "[{$this->udate()}]  NOTICE  Server hotReload: use {$usage}s, total: {$count} files, change: {$changeCount} files: {$changeFiles}.\n";
+                // 如果开启了Zend OPCache，对改变了的文件进行缓存清除
                 if (extension_loaded('Zend OPcache')) {
-                    if (opcache_reset()) {
-                        echo "[" . $this->udate() . "]  NOTICE  OPcache reset finished.\n";
+                    $config = opcache_get_configuration()['directives'];
+                    if ($config['opcache.enable']) {
+                        if ($config['opcache.enable_cli']) {
+                            $count = 0;
+                            foreach ($changeInodeList as $item) {
+                                $file = explode('|', $item)[2];
+                                if (opcache_is_script_cached($file) && opcache_invalidate($file, true)) {
+                                    $count++;
+                                }
+                            }
+                            echo "[{$this->udate()}]  NOTICE  Zend OPcache invalidate {$count} files.\n";
+                        } else {
+                            echo "[{$this->udate()}]  NOTICE  Zend OPcache cli unenable.\n";
+                        }
                     } else {
-                        echo "[" . $this->udate() . "]  NOTICE  OPcache reset failed.\n";
+                        echo "[{$this->udate()}]  NOTICE  Zend OPcache unenable.\n";
                     }
                 }
-                \Swoole\Timer::after(2000, function () {
-                    ServerManager::getInstance()->getSwooleServer()->reload();
-                });
+                ServerManager::getInstance()->getSwooleServer()->reload();
             } else {
                 // 首次扫描不需要进行重启操作
-                //echo "[" . $this->udate() . "]  NOTICE  Server hotReload: ready use {$usage} s, total: {$count} files, change: " . count($modifyInodeList) . " files.\n";
                 $this->isReady = true;
             }
         }
@@ -174,7 +184,7 @@ class HotReload extends AbstractProcess
         $monitorExt = $this->getArg('monitorExt');
 
         // 指定多久执行检测一次文件变动
-        $rate = $rate ? intval($rate) : 10;
+        $rate = $rate ? intval($rate) : 20;
         // 指定是否禁用inotify扩展
         $disableInotify = $disableInotify ? boolval($disableInotify) : true;
         // 指定需要监视的目录，建议只监视App目录下的文件变更
