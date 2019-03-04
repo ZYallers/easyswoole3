@@ -8,7 +8,6 @@
 
 namespace EasySwoole\EasySwoole;
 
-use App\Crontab\ThrowtablePushMsgTask;
 use App\Throwable\Handler;
 use App\Utility\Code;
 use App\Utility\Pool\Mysql\Enjoythin;
@@ -109,23 +108,61 @@ class EasySwooleEvent implements Event
         self::registerPool();
     }
 
+    private static function registerCrontabTask(): void
+    {
+        $Crontab = Crontab::getInstance();
+        $nowRunMode = Pub::getRunMode();
+        foreach (Config::getInstance()->getConf('crontab') as $task) {
+            if (!isset($task['class']) || empty($task['class']) || !class_exists($task['class'])) {
+                continue;
+            }
+            if (isset($task['runmode']) && $task['runmode'] != $nowRunMode) {
+                continue;
+            }
+            if (isset($task['version']) && !Pub::versionCompare($task['version'])) {
+                continue;
+            }
+            $Crontab->addTask($task['class']);
+        }
+    }
+
+    private static function registerProcess(): void
+    {
+        $ServerManager = ServerManager::getInstance();
+        $nowRunMode = Pub::getRunMode();
+        foreach (Config::getInstance()->getConf('process') as $process) {
+            if (!isset($process['class']) || empty($process['name']) || !class_exists($process['class'])) {
+                continue;
+            }
+            if (isset($process['runmode']) && $process['runmode'] != $nowRunMode) {
+                continue;
+            }
+            if (isset($process['version']) && !Pub::versionCompare($process['version'])) {
+                continue;
+            }
+            $processName = Pub::getProcessFullName($process['name']);
+            $args = isset($process['args']) ? $process['args'] : null;
+            $ServerManager->getSwooleServer()->addProcess((new $process['class']($processName, $args))->getProcess());
+        }
+    }
+
     public static function mainServerCreate(EventRegister $register)
     {
         // TODO: Implement mainServerCreate() method.
-        // 注册异常消息推送定时任务
-        Crontab::getInstance()->addTask(ThrowtablePushMsgTask::class);
 
-        // 配置swoole日志文件名
-        $logFile = Config::getInstance()->getConf('LOG_DIR') . '/'
-            . Config::getInstance()->getConf('SERVER_NAME') . '.swoole.log';
-        Config::getInstance()->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
+        // 配置 Swoole 日志文件名
+        $Config = Config::getInstance();
+        $logFile = $Config->getConf('LOG_DIR') . '/' . $Config->getConf('SERVER_NAME') . '.swoole.log';
+        $Config->setConf('MAIN_SERVER.SETTING.log_file', $logFile);
         ServerManager::getInstance()->getSwooleServer()->set(['log_file' => $logFile]);
 
-        if (Pub::isDev()) {
-            // 注册进程.暴力热加载
-            ServerManager::getInstance()->getSwooleServer()
-                ->addProcess((new \App\Process\HotReload(Pub::getProcessFullName('HotReload')))->getProcess());
+        // 注册定时任务
+        self::registerCrontabTask();
 
+        // 注册自定义进程
+        self::registerProcess();
+
+        if (Pub::isDev()) {
             $register->add($register::onConnect, function (\swoole_server $server, int $workerId) {
                 echo "[" . Pub::udate() . "]  NOTICE  Server {$workerId} connect.\n";
             });
@@ -153,15 +190,15 @@ class EasySwooleEvent implements Event
         // TODO: Implement onRequest() method.
         // ============ 接口版本校验 ============
         $msg = Pub::parseUriPath($request);
-        if (isset($msg)) {
+        if (is_null($msg)) {
+            $request->withAttribute('request_time', microtime(true));
+            $request->withAttribute('remote_ip', Pub::clientIp($request));
+        } else {
             $data = ['code' => Code::NOT_FOUND, 'data' => null, 'msg' => $msg];
             $response->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $response->withHeader('Content-type', 'application/json;charset=utf-8');
             $response->withStatus(Code::NOT_FOUND);
             $response->end();
-        } else {
-            $request->withAttribute('request_time', microtime(true));
-            $request->withAttribute('remote_ip', Pub::clientIp($request));
         }
         return true;
     }

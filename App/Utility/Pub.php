@@ -15,6 +15,11 @@ use EasySwoole\Http\Request;
 
 class Pub
 {
+    static function getRunMode(): string
+    {
+        return Config::getInstance()->getConf('RUN_MODE');
+    }
+
     static function isDev(): bool
     {
         return Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV;
@@ -56,6 +61,32 @@ class Pub
         return $clientAddress;
     }
 
+    static function versionCompare(string $inputVersion, ?string $requestVersion = null): bool
+    {
+        if (empty($requestVersion)) {
+            $version = Config::getInstance()->getConf('app.version');
+        }
+        $return = false;
+        // 先获取 inputVersion 支持的版本，然后遍历
+        foreach (explode('|', $inputVersion) as $item) {
+            // 判断是否包含'+'支持以上版本
+            if (strpos($item, '+') !== false) {
+                // 判断 version 是否大于等于要求的版本
+                if (version_compare($version, substr($item, 0, -1), '>=')) {
+                    $return = true;
+                    break;
+                }
+            } else {
+                // 判断 version 是否等于要求的版本
+                if ($version == $item) {
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;
+    }
+
     static function parseUriPath(Request $request): ?string
     {
         $msg = null;
@@ -71,11 +102,11 @@ class Pub
                 }
 
                 $flag = false;
-                // 先获取router支持的版本，然后遍历
+                // 先获取 router 支持的版本，然后遍历
                 foreach (explode('|', $router['version']) as $item) {
                     // 判断是否包含'+'支持以上版本
                     if (strpos($item, '+') !== false) {
-                        // 判断 $version 是否大于等于要求的 $vs 版本
+                        // 判断 version 是否大于等于要求的 $vs 版本
                         $vs = substr($item, 0, -1);
                         if (version_compare($version, $vs, '>=')) {
                             $version = $vs;
@@ -83,7 +114,7 @@ class Pub
                             break;
                         }
                     } else {
-                        // 判断 $version 是否等于要求的 $vs 版本
+                        // 判断 version 是否等于要求的版本
                         if ($version == $item) {
                             $flag = true;
                             break;
