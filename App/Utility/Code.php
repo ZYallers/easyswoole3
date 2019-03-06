@@ -29,12 +29,8 @@ class Code
         501 => '参数缺少或非法',
     ];
 
-    static function getReasonPhrase($statusCode): ?string
+    static function getReasonPhrase($statusCode): string
     {
-        if (isset(self::$phrases[$statusCode])) {
-            return self::$phrases[$statusCode];
-        } else {
-            return null;
-        }
+        return isset(self::$phrases[$statusCode]) ? self::$phrases[$statusCode] : '';
     }
 }

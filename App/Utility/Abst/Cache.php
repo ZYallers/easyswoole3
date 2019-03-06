@@ -21,23 +21,25 @@ abstract class Cache
 
     public function __construct(string $className)
     {
-        if (class_exists($className)) {
-            $this->className = $className;
-            for ($i = 0; $i < $this->tryTimes; $i++) {
-                $cache = PoolManager::getInstance()->getPool($this->className)->getObj();
-                if ($cache instanceof RedisObject) {
-                    $this->cache = $cache;
-                    break;
-                }
+        if (!class_exists($className)) {
+            throw new \Exception("{$className} Class does not exist");
+        }
+        $this->className = $className;
+        if (!$this->tryTimes > 0) {
+            $this->tryTimes = 1;
+        }
+        for ($i = 0; $i < $this->tryTimes; $i++) {
+            $cache = PoolManager::getInstance()->getPool($this->className)->getObj();
+            if ($cache instanceof RedisObject) {
+                $this->cache = $cache;
+                break;
             }
-            if (is_null($cache)) {
-                throw new PoolEmpty("{$className} pool is empty");
-            }
-            if (!$cache instanceof RedisObject) {
-                throw new PoolException("{$className} convert to pool error");
-            }
-        } else {
-            throw new \Exception("{$className} class does not exist");
+        }
+        if (is_null($cache)) {
+            throw new PoolEmpty("{$className} Pool is empty");
+        }
+        if (!$cache instanceof RedisObject) {
+            throw new PoolException("{$className} Convert to pool error");
         }
     }
 
@@ -55,8 +57,8 @@ abstract class Cache
         // TODO: Implement __destruct() method.
         if ($this->cache instanceof RedisObject) {
             PoolManager::getInstance()->getPool($this->className)->recycleObj($this->cache);
-            /*if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV) {
-                echo '[' . date('Y-m-d H:i:s') . '] Redis pool recycle.' . "\n";
+            /*if (\App\Utility\Pub::isDev()) {
+                echo '[' . \App\Utility\Pub::udate() . "]  NOTICE  Class has been recycled\n";
             }*/
         }
     }

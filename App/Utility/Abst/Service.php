@@ -11,5 +11,5 @@ namespace App\Utility\Abst;
 
 abstract class Service
 {
-
+    // nothing...
 }

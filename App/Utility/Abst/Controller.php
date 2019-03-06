@@ -8,9 +8,9 @@
 
 namespace App\Utility\Abst;
 
-use App\Cache\Session;
-use App\Utility\AppConst;
+use App\Utility\Pub;
 use App\Utility\Code;
+use App\Cache\Session;
 use EasySwoole\EasySwoole\Config;
 
 abstract class Controller extends \EasySwoole\Http\AbstractInterface\Controller
@@ -32,29 +32,30 @@ abstract class Controller extends \EasySwoole\Http\AbstractInterface\Controller
         // 从请求里获取之前增加的时间戳
         $reqTime = $this->request()->getAttribute('request_time');
         // 计算一下运行时间
-        $runTime = round(microtime(true) - $reqTime, 6) . 's';
+        $runtime = round(microtime(true) - $reqTime, 6) . 's';
         // 获取用户IP地址
         $ip = $this->request()->getAttribute('remote_ip');
         // 拼接日志内容
-        $debugInfo = ['ip' => $ip, 'now' => date('Y-m-d H:i:s'), 'runtime' => $runTime, 'uri' => $this->request()->getUri()->__toString()];
+        $data = ['now' => Pub::udate(), 'ip' => $ip, 'runtime' => $runtime,
+            'uri' => $this->request()->getUri()->__toString()];
         $userAgent = $this->request()->getHeader('user-agent');
         if (is_array($userAgent) && count($userAgent) > 0) {
-            $debugInfo['user_agent'] = $userAgent[0];
+            $data['user_agent'] = $userAgent[0];
         }
-        return $debugInfo;
+        return $data;
     }
 
     protected function writeJson($statusCode = 200, $data = null, $msg = null)
     {
         if (!$this->response()->isEndResponse()) {
-            if (is_null($msg)) {
-                $msg = Code::getReasonPhrase($statusCode);
+            $json = ['code' => $statusCode, 'msg' => is_null($msg) ? Code::getReasonPhrase($statusCode) : $msg];
+            if (!is_null($data)) {
+                $json['data'] = $data;
             }
-            $data = ['code' => $statusCode, 'data' => $data, 'msg' => is_null($msg) ? '' : $msg];
-            if (Config::getInstance()->getConf('RUN_MODE') == AppConst::RM_DEV || $this->request()->getRequestParam('debug') == 'on') {
-                $data['debug'] = $this->getDebugData();
+            if (Pub::isDev() || $this->request()->getRequestParam('debug') == 'on') {
+                $json['debug'] = $this->getDebugData();
             }
-            $this->response()->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->response()->write(json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
             $this->response()->withStatus($statusCode);
             $this->response()->end();
