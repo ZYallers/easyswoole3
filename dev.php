@@ -8,10 +8,10 @@ return [
         'SOCK_TYPE' => SWOOLE_TCP,
         'RUN_MODEL' => SWOOLE_PROCESS,
         'SETTING' => [
-            'worker_num' => 8, //运行的worker进程数量
-            'max_request' => 5000, //worker完成该数量的请求后将退出，防止内存溢出
-            'task_worker_num' => 8, //运行的task_worker进程数量
-            'task_max_request' => 1000, //执行该数量次数后重启task进程
+            'worker_num' => 4, //运行的worker进程数量
+            'max_request' => 10000, //worker完成该数量的请求后将退出，防止内存溢出
+            'task_worker_num' => 4, //运行的task_worker进程数量
+            'task_max_request' => 5000, //执行该数量次数后重启task进程
             'log_level' => SWOOLE_LOG_NOTICE, //设置Server错误日志打印的等级，https://wiki.swoole.com/wiki/page/538.html
             'enable_coroutine' => true, //底层自动在onRequest回调中创建协程，开发者无需自行使用go函数创建协程，https://wiki.swoole.com/wiki/page/949.html
             'max_coroutine' => 3000, //默认值为3000，设置当前工作进程最大协程数量。https://wiki.swoole.com/wiki/page/950.html
